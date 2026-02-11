@@ -70,10 +70,13 @@ STARTED = False
 PLAYING_SONG = ""
 
 
-def get_cover_art(mp3_file_path, output_dir=os.path.abspath(__file__) + "/temp_cover_art"):
+def get_cover_art(mp3_file_path, output_dir=os.path.join(os.path.dirname(__file__), "temp_cover_art")):
     """
     Extracts the cover art from an MP3 file using the mutagen library.
     """
+
+    print(mp3_file_path, output_dir)
+
     try:
         # Load the MP3 file with mutagen
         audio = MP3(mp3_file_path)
@@ -100,7 +103,7 @@ def get_cover_art(mp3_file_path, output_dir=os.path.abspath(__file__) + "/temp_c
                     continue
                 
                 # Create the output filename
-                track_title = audio.get('TIT2', ['untitled'])[0]
+                track_title = audio.get('TIT2', ['temp'])[0]
                 output_filename = f"{track_title.replace('/', '_')}_cover.{ext}"
                 output_path = os.path.join(output_dir, output_filename)
 
