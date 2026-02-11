@@ -1,12 +1,9 @@
 import pygame
 import os
 from screeninfo import get_monitors
-import subprocess
 import sys
 from platformdirs import user_music_dir
 from pathlib import Path
-from mutagen.mp3 import MP3
-from mutagen.id3 import ID3, APIC
 import random
 from get_files import get_music_files_and_directories
 from update_image import get_cover_art
@@ -59,6 +56,13 @@ while True:
             if event.button == 1:  # Left mouse button
                 DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons = get_music_files_and_directories(folder_path)
 
+                print(SCREEN_WIDTH/5+5 <= mouse_pos[0] <= SCREEN_WIDTH/15+25 and  5 <= mouse_pos[1] <= 25)
+                print(SCREEN_WIDTH/5+5, mouse_pos[0], SCREEN_WIDTH/5+25, mouse_pos[1])
+
+                if SCREEN_WIDTH/5+5 <= mouse_pos[0] <= SCREEN_WIDTH/5+25 and  5 <= mouse_pos[1] <= 25:
+                    folder_path = os.path.dirname(folder_path)
+                    print("switch", folder_path)    
+
                 for button in directory_buttons:
                     if button[0] <= mouse_pos[1] <= button[0] + 30 and mouse_pos[0] <= song_select_window:
                         folder_path = os.path.join(folder_path, button[1])
@@ -103,6 +107,7 @@ while True:
          screen.blit(text_surface, (10, (len(DIRECTORY_ONLY) + FILES_ONLY.index(file)+2)*40 + 10))
 
     pygame.draw.rect(screen, (20, 0, 0), (song_select_window, 0, SCREEN_WIDTH - song_select_window, SCREEN_HEIGHT))
+    pygame.draw.rect(screen, (64, 64, 64), (SCREEN_WIDTH/5+5, 5, 20, 20))
 
     if STARTED:
         text_surface = font.render("Now Playing: " + PLAYING_SONG, True, (255, 255, 255))
