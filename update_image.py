@@ -1,8 +1,9 @@
 import os
 from mutagen.mp3 import MP3
 from mutagen.id3 import ID3, APIC
+from PIL import Image
 
-def get_cover_art(mp3_file_path, output_dir=os.path.join(os.path.dirname(__file__), "temp_cover_art")):
+def get_cover_art(mp3_file_path, size=640, output_dir=os.path.join(os.path.dirname(__file__), "temp_cover_art")):
     """
     Extracts the cover art from an MP3 file using the mutagen library.
     """
@@ -44,9 +45,20 @@ def get_cover_art(mp3_file_path, output_dir=os.path.join(os.path.dirname(__file_
                     img_file.write(tag.data)
                 
                 print(f"Successfully extracted cover art to: {output_path}")
-                return # Stop after the first image is found
+
+                img = Image.open(output_path)
+
+                width, height = img.size
+
+                img = img.resize((int(width*(size/height)), size), Image.Resampling.LANCZOS)
+
+                img.save(output_path)
+
+                return int(width*(size/height)), size # Stop after the first image is found
         
         print(f"No cover art (APIC tag) found in {mp3_file_path}")
 
     except Exception as e:
         print(f"An error occurred: {e}")
+
+        return 640, 640
