@@ -122,7 +122,7 @@ while True:
                 play_pause_button_color = (64, 64, 64)  # Default gray 
 
             # Change back button color on hover
-            if SCREEN_WIDTH/5-25 <= mouse_pos[0] <= SCREEN_WIDTH/5-5 and 5 <= mouse_pos[1] <= 25:
+            if SCREEN_WIDTH/5-40 <= mouse_pos[0] <= SCREEN_WIDTH/5-20 and 5 <= mouse_pos[1] <= 25:
                 back_button_color = (128, 128, 128)  # Lighter gray on hover
             else:
                 back_button_color = (64, 64, 64)  # Default gray
@@ -152,7 +152,7 @@ while True:
                 print(SCREEN_WIDTH/5-25, mouse_pos[0], SCREEN_WIDTH/5-5, mouse_pos[1])
 
                 # Check if back button was clicked (navigate to parent directory)
-                if SCREEN_WIDTH/5-25 <= mouse_pos[0] <= SCREEN_WIDTH/5-5 and 5 <= mouse_pos[1] <= 25:
+                if SCREEN_WIDTH/5-40 <= mouse_pos[0] <= SCREEN_WIDTH/5-20 and 5 <= mouse_pos[1] <= 25:
                     folder_path = os.path.dirname(folder_path)
                     print("Back button clicked, new folder path:", folder_path)
 
@@ -389,7 +389,7 @@ while True:
     pygame.draw.rect(screen, (20, 20, 20), (song_select_window, 0, SCREEN_WIDTH - song_select_window, SCREEN_HEIGHT))
     
     # Draw back button (small gray square)
-    pygame.draw.rect(screen, back_button_color, (SCREEN_WIDTH/5-25, 5, 20, 20))
+    pygame.draw.rect(screen, back_button_color, (SCREEN_WIDTH/5-40, 5, 20, 20))
 
     #draw media control buttons (small gray rectangles)
     pygame.draw.rect(screen, play_pause_button_color, ((SCREEN_WIDTH-SCREEN_WIDTH/5)/2-25+SCREEN_WIDTH/5, SCREEN_HEIGHT-30, 50, 20))

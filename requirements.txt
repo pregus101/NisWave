@@ -1,0 +1,10 @@
+pygame>=2.5.0
+screeninfo>=0.8.0
+platformdirs>=4.0.0
+librosa>=0.10.0
+numpy>=1.24.0
+scipy>=1.10.0
+Pillow>=10.0.0
+mutagen>=1.46.0
+youtube-search-python>=1.6.6
+sounddevice>=0.4.6
