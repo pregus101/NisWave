@@ -178,7 +178,7 @@ while True:
                         played_songs.remove(PLAYING_SONG)
                             
                         # Get album cover art for the selected track
-                        render_size,  = get_cover_art(file_path, SIZE)
+                        render_size, cover_art_path = get_cover_art(file_path, SIZE)
 
                         # CREATE AND START WAVE VISUALIZER
                         visualizer = WaveVisualizer(file_path, 
@@ -441,5 +441,4 @@ while True:
     
     # Refresh the display with all rendered elements
     pygame.display.flip()
-
 

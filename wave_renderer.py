@@ -65,6 +65,8 @@ class WaveVisualizer:
     """
     A modular wave visualizer that can be integrated with UI systems.
     Takes file input, render size, and pause/play control from external sources.
+    
+    Thread-safe: All public methods can safely be called from multiple threads.
     """
     
     def __init__(self, file_path, render_width, render_height, screen_surface=None):
@@ -81,6 +83,9 @@ class WaveVisualizer:
         self.render_width = render_width
         self.render_height = render_height
         self.screen_surface = screen_surface
+        
+        # Thread safety lock for this visualizer instance
+        self._instance_lock = threading.Lock()
         
         # Visualizer state
         self.is_paused = False
@@ -109,6 +114,7 @@ class WaveVisualizer:
     def set_color_from_image(self, image_path):
         """
         Extract dominant color from image and set a contrasting color for visualization.
+        Thread-safe.
         
         Args:
             image_path (str): Path to the image file
@@ -132,13 +138,15 @@ class WaveVisualizer:
                 comp_g = 255 - g
                 comp_b = 255 - b
                 
-                # Set the color
-                self.color = (comp_r, comp_g, comp_b)
+                # Set the color (with lock for thread safety)
+                with self._instance_lock:
+                    self.color = (comp_r, comp_g, comp_b)
                 print(f"Wave color set to RGB{self.color} for contrast")
         except Exception as e:
             print(f"Error setting color from image: {e}")
             # Default to bright cyan for good contrast
-            self.color = (0, 255, 255)
+            with self._instance_lock:
+                self.color = (0, 255, 255)
     
     def _initialize_bars(self):
         """Initialize bar heights based on render dimensions."""
@@ -170,12 +178,30 @@ class WaveVisualizer:
     
     def set_pause_state(self, paused):
         """
-        Externally control pause/play state.
+        Externally control pause/play state. Thread-safe.
         
         Args:
             paused (bool): True to pause, False to resume
         """
-        if paused != self.is_paused:
+        with self._instance_lock:
+            if paused != self.is_paused:
+                self.is_paused = paused
+                if paused:
+                    self.paused_elapsed_seconds = (pygame.time.get_ticks() - self.start_time) / 1000.0
+                    pygame.mixer.music.pause()
+                else:
+                    pygame.mixer.music.unpause()
+                    self.start_time = pygame.time.get_ticks() - (self.paused_elapsed_seconds * 1000)
+    
+    def get_pause_state(self):
+        """Get current pause state. Thread-safe."""
+        with self._instance_lock:
+            return self.is_paused
+    
+    def toggle_pause(self):
+        """Toggle pause/play state. Thread-safe."""
+        with self._instance_lock:
+            paused = not self.is_paused
             self.is_paused = paused
             if paused:
                 self.paused_elapsed_seconds = (pygame.time.get_ticks() - self.start_time) / 1000.0
@@ -184,26 +210,19 @@ class WaveVisualizer:
                 pygame.mixer.music.unpause()
                 self.start_time = pygame.time.get_ticks() - (self.paused_elapsed_seconds * 1000)
     
-    def get_pause_state(self):
-        """Get current pause state."""
-        return self.is_paused
-    
-    def toggle_pause(self):
-        """Toggle pause/play state."""
-        self.set_pause_state(not self.is_paused)
-    
     def update_render_size(self, new_width, new_height):
         """
-        Update render dimensions dynamically.
+        Update render dimensions dynamically. Thread-safe.
         
         Args:
             new_width (int): New render width
             new_height (int): New render height
         """
-        if new_width != self.render_width or new_height != self.render_height:
-            self.render_width = new_width
-            self.render_height = new_height
-            self._initialize_bars()
+        with self._instance_lock:
+            if new_width != self.render_width or new_height != self.render_height:
+                self.render_width = new_width
+                self.render_height = new_height
+                self._initialize_bars()
     
     def process_audio_chunk(self, indata):
         """Process audio chunk for visualization."""
@@ -295,22 +314,24 @@ class WaveVisualizer:
         return True
     
     def _get_elapsed_time(self):
-        """Get current elapsed time, accounting for pause state."""
-        if self.is_paused:
-            return self.paused_elapsed_seconds
-        else:
-            elapsed_ms = pygame.time.get_ticks() - self.start_time
-            return elapsed_ms / 1000.0
+        """Get current elapsed time, accounting for pause state. Thread-safe."""
+        with self._instance_lock:
+            if self.is_paused:
+                return self.paused_elapsed_seconds
+            else:
+                elapsed_ms = pygame.time.get_ticks() - self.start_time
+                return elapsed_ms / 1000.0
     
     def play(self):
-        """Start playback."""
+        """Start playback. Thread-safe."""
         try:
-            if self.audio_data is not None:
-                pygame.mixer.music.load(self.file_path)
-                pygame.mixer.music.play()
-                self.start_time = pygame.time.get_ticks()
-                self.is_paused = False
-                return True
+            with self._instance_lock:
+                if self.audio_data is not None:
+                    pygame.mixer.music.load(self.file_path)
+                    pygame.mixer.music.play()
+                    self.start_time = pygame.time.get_ticks()
+                    self.is_paused = False
+                    return True
         except Exception as e:
             print(f"Error playing audio: {e}")
         return False
