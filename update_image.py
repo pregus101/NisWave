@@ -54,11 +54,11 @@ def get_cover_art(mp3_file_path, size=640, output_dir=os.path.join(os.path.dirna
 
                 img.save(output_path)
 
-                return int(width*(size/height)), size # Stop after the first image is found
+                return [int(width*(size/height)), size], output_path
         
         print(f"No cover art (APIC tag) found in {mp3_file_path}")
 
     except Exception as e:
         print(f"An error occurred: {e}")
 
-        return 640, 640
+        return [640, 640], os.path.join(os.path.dirname(__file__), "assets/default_cover.jpg")

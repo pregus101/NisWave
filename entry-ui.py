@@ -43,6 +43,7 @@ default_width, default_height = default_screen_size
 
 # Get initial music directory path
 folder_path = Path(user_music_dir())
+currently_playing_folder_path = folder_path
 
 # Set up the display window
 SCREEN_WIDTH = default_width
@@ -66,11 +67,27 @@ visualizer_running = False
 directory_buttons_window = pygame.Surface((SCREEN_WIDTH/5, SCREEN_HEIGHT/2))
 file_buttons_window = pygame.Surface((SCREEN_WIDTH/5, SCREEN_HEIGHT/2))
 
-# Set inital pause/play button state
+# Set inital button states
 play_pause = "play"  # Can be "play" or "pause"
+shuffle = False  # Shuffle mode state
 
 # Initialize the played songs
 played_songs = []
+
+# Scroll state variables
+dir_scroll_offset = 0  # Vertical offset for directories
+file_scroll_offset = 0  # Vertical offset for files
+
+# Default cover art path (used if no cover art is found in the MP3 file)
+cover_art_path = os.path.join(os.path.dirname(__file__), "assets/default_cover.jpg")  # Default cover art path
+
+# set defualt button colors
+skip_button_color = (64, 64, 64)  # Default gray for skip button
+play_pause_button_color = (64, 64, 64)  # Default gray for play/pause button
+back_button_color = (64, 64, 64)  # Default gray for back button
+shuffle_button_color = (64, 64, 64)  # Default gray for shuffle button
+previous_button_color = (64, 64, 64)  # Default gray for previous button
+
 
 # # Create the queue for auto-playing songs (will be populated with files from the current directory)
 # DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons = get_music_files_and_directories(folder_path, SCREEN_HEIGHT)
@@ -92,13 +109,43 @@ while True:
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
-        
+
+        if event.type == pygame.MOUSEMOTION:
+            mouse_pos = event.pos  # Update mouse position on movement
+
+            shuffle_button_color = (128, 128, 128) if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-135+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-85+SCREEN_WIDTH/5 and SCREEN_HEIGHT-30 <= mouse_pos[1] <= SCREEN_HEIGHT-10 else (64, 64, 64)  # Change shuffle button color on hover
+
+            # change play/pause button color on hover
+            if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-25+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+25+SCREEN_WIDTH/5 and SCREEN_HEIGHT-30 <= mouse_pos[1] <= SCREEN_HEIGHT-10:
+                play_pause_button_color = (128, 128, 128)  # Lighter gray on hover
+            else:        
+                play_pause_button_color = (64, 64, 64)  # Default gray 
+
+            # Change back button color on hover
+            if SCREEN_WIDTH/5-25 <= mouse_pos[0] <= SCREEN_WIDTH/5-5 and 5 <= mouse_pos[1] <= 25:
+                back_button_color = (128, 128, 128)  # Lighter gray on hover
+            else:
+                back_button_color = (64, 64, 64)  # Default gray
+
+            # Change skip button color on hover
+            if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+30+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+80+SCREEN_WIDTH/5 and SCREEN_HEIGHT-30 <= mouse_pos[1] <= SCREEN_HEIGHT-10:
+                skip_button_color = (128, 128, 128)  # Lighter gray on hover
+            else:
+                skip_button_color = (64, 64, 64)  # Default gray
+
+            # prevoius button color on hover
+            if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-80+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-30+SCREEN_WIDTH/5 and SCREEN_HEIGHT-30 <= mouse_pos[1] <= SCREEN_HEIGHT-10:
+                previous_button_color = (128, 128, 128)  # Lighter gray on hover
+            else:
+                previous_button_color = (64, 64, 64)  # Default gray
+
+
         # Handle mouse button clicks (folder/file selection and navigation)
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:  # Left mouse button only
                 # Get current directory contents for button interaction
                 
-                DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons = get_music_files_and_directories(folder_path, SCREEN_HEIGHT)
+                DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons = get_music_files_and_directories(folder_path, SCREEN_HEIGHT, dir_scroll_offset, file_scroll_offset)
 
                 # Debug output (can be removed later)
                 print(SCREEN_WIDTH/5-25 <= mouse_pos[0] <= SCREEN_WIDTH/5-5 and 5 <= mouse_pos[1] <= 25)
@@ -109,6 +156,42 @@ while True:
                     folder_path = os.path.dirname(folder_path)
                     print("Back button clicked, new folder path:", folder_path)
 
+                # Check if skip button was clicked
+                if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+30+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+80+SCREEN_WIDTH/5 and SCREEN_HEIGHT-30 <= mouse_pos[1] <= SCREEN_HEIGHT-10 and STARTED:
+                    pygame.mixer.music.stop()
+                    play_pause = "play"
+
+                # Check if previous button was clicked
+                if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-80+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-30+SCREEN_WIDTH/5 and SCREEN_HEIGHT-30 <= mouse_pos[1] <= SCREEN_HEIGHT-10 and STARTED:
+                    
+                    try:
+                        file_path = os.path.join(currently_playing_folder_path, played_songs[-1])
+                        queue.insert(0, PLAYING_SONG)  # Add current song back to the front of the queue
+                        skip = False
+                    except:
+                        skip = True
+                    
+                    if not skip:
+                        STARTED = True
+                        PLAYING_SONG = os.path.basename(file_path)
+
+                        played_songs.remove(PLAYING_SONG)
+                            
+                        # Get album cover art for the selected track
+                        render_size,  = get_cover_art(file_path, SIZE)
+
+                        # CREATE AND START WAVE VISUALIZER
+                        visualizer = WaveVisualizer(file_path, 
+                                                    render_size[0], 
+                                                    render_size[1])
+                        # Set wave color to contrast with album cover
+                        cover_art_path = os.path.join(os.path.dirname(__file__), "temp_cover_art/temp_cover.png")
+                        visualizer.set_color_from_image(cover_art_path)
+                        visualizer.load_audio()
+                        visualizer.play()
+                        visualizer_running = True
+
+
 
                 # Check if pause/play button was clicked
                 if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-25+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+25+SCREEN_WIDTH/5 and SCREEN_HEIGHT-30 <= mouse_pos[1] <= SCREEN_HEIGHT-10:
@@ -116,12 +199,24 @@ while True:
                         pygame.mixer.music.pause()
                         STARTED = False
                         play_pause = "pause"
-                        WaveVisualizer.set_pause_state(visualizer, True)  # Pause the visualizer
+                        try:
+                            WaveVisualizer.set_pause_state(visualizer, True)  # Pause the visualizer
+                        except:
+                            pass  # Visualizer may not be initialized yet, ignore if error occurs
                     else:
                         pygame.mixer.music.unpause()
                         STARTED = True
                         play_pause = "play"
-                        WaveVisualizer.set_pause_state(visualizer, False)  # Unpause the visualizer
+                        try:
+                            WaveVisualizer.set_pause_state(visualizer, False)  # Unpause the visualizer
+                        except:
+                            pass  # Visualizer may not be initialized yet, ignore if error occurs
+                            STARTED = False
+                            
+
+                # Check if shuffle button was clicked
+                if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-135+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-85+SCREEN_WIDTH/5 and SCREEN_HEIGHT-30 <= mouse_pos[1] <= SCREEN_HEIGHT-10:
+                    shuffle = not shuffle  # Toggle shuffle state
 
                 # Check if a directory was clicked and navigate into it
                 for button in directory_buttons:
@@ -135,34 +230,59 @@ while True:
                         queue = FILES_ONLY.copy()
                         play_pause = "play"  # Reset play/pause state to "play" when a new song is selected
                         played_songs = []  # Clear the list of played songs when a new song is selected
-                        played_songs.append(button[1])  # Add the selected song to the list of played songs
                         
                         # Load and play the selected file
                         file_path = os.path.join(folder_path, button[1])
-                        # pygame.mixer.music.load(file_path)
-                        # pygame.mixer.music.play()
+                        currently_playing_folder_path = folder_path  # Update the currently playing folder path
                         STARTED = True
                         queue.remove(button[1])
                         PLAYING_SONG = button[1]
                         
                         # Get album cover art for the selected track
-                        render_size = get_cover_art(file_path, SIZE)
+                        render_size, cover_art_path = get_cover_art(file_path, SIZE)
 
                         # CREATE AND START WAVE VISUALIZER
                         visualizer = WaveVisualizer(file_path, 
                                                    render_size[0], 
                                                    render_size[1])
                         # Set wave color to contrast with album cover
-                        cover_art_path = os.path.join(os.path.dirname(__file__), "temp_cover_art/temp_cover.png")
                         visualizer.set_color_from_image(cover_art_path)
                         visualizer.load_audio()
                         visualizer.play()
                         visualizer_running = True
+
+        if event.type == pygame.MOUSEWHEEL:
+            if mouse_pos[0] <= song_select_window:
+                if mouse_pos[1] < SCREEN_HEIGHT/2:  # Directory section
+                    dir_scroll_offset -= event.y * 40  # Scroll by item height
+                    dir_scroll_offset = max(0, min(dir_scroll_offset, 
+                                                   max(0, len(DIRECTORY_ONLY) * 40 - (SCREEN_HEIGHT/2 - 60))))
+                else:  # File section
+                    file_scroll_offset -= event.y * 40
+                    file_scroll_offset = max(0, min(file_scroll_offset,
+                                                    max(0, len(FILES_ONLY) * 40 - (SCREEN_HEIGHT/2 - 60))))
+
         
-        # Handle spacebar for pause/play (currently disabled)
-        # if event.type == pygame.KEYDOWN:
-        #     if event.key == pygame.K_SPACE and visualizer:
-        #         visualizer.toggle_pause()
+        # Handle spacebar for pause/play
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE and visualizer:
+                if play_pause == "play" and STARTED:
+                    pygame.mixer.music.pause()
+                    STARTED = False
+                    play_pause = "pause"
+                    try:
+                        WaveVisualizer.set_pause_state(visualizer, True)  # Pause the visualizer
+                    except:
+                        pass  # Visualizer may not be initialized yet, ignore if error occurs
+                else:
+                    pygame.mixer.music.unpause()
+                    STARTED = True
+                    play_pause = "play"
+                    try:
+                        WaveVisualizer.set_pause_state(visualizer, False)  # Unpause the visualizer
+                    except:
+                        pass  # Visualizer may not be initialized yet, ignore if error occurs
+                        STARTED = False
 
     # ========================================================================
     # AUTO-PLAY & QUEUE MANAGEMENT
@@ -172,29 +292,35 @@ while True:
     if STARTED:
         if not pygame.mixer.music.get_busy():
             # Pick a random song from the queue and play it
-            newsong = queue[random.randint(0, len(queue)-1)]
-            file_path = os.path.join(folder_path, newsong)
-            pygame.mixer.music.load(file_path)
-            pygame.mixer.music.play()
-            PLAYING_SONG = newsong
+            if shuffle:
+                newsong = queue[random.randint(0, len(queue)-1)]
+            else:
+                newsong = queue[0] if queue else ""
 
-            played_songs.append(newsong)  # Add the new song to the list of played songs
+            file_path = os.path.join(currently_playing_folder_path, newsong)
+            if os.path.isfile(file_path):
+                played_songs.append(PLAYING_SONG)  # Add the previous song to the list of played songs
+                PLAYING_SONG = newsong
 
-            queue.remove(newsong)
+                queue.remove(newsong)
 
-            # Get cover art and update visualizer for the new song
-            render_size = get_cover_art(file_path, SIZE)
-            
-            # UPDATE VISUALIZER FOR NEW SONG
-            visualizer = WaveVisualizer(file_path, 
-                                    render_size[0], 
-                                    render_size[1])
-            # Set wave color to contrast with album cover
-            cover_art_path = os.path.join(os.path.dirname(__file__), "temp_cover_art/temp_cover.png")
-            visualizer.set_color_from_image(cover_art_path)
-            visualizer.load_audio()
-            visualizer.play()
-            visualizer_running = True
+                # Get cover art and update visualizer for the new song
+                render_size, cover_art_path = get_cover_art(file_path, SIZE)
+                
+                # UPDATE VISUALIZER FOR NEW SONG
+                visualizer = WaveVisualizer(file_path, 
+                                        render_size[0], 
+                                        render_size[1])
+                # Set wave color to contrast with album cover
+                visualizer.set_color_from_image(cover_art_path)
+                visualizer.load_audio()
+                visualizer.play()
+                visualizer_running = True
+            else:
+                print("No more songs in the queue to play.")
+                STARTED = False  # Stop playback if there are no more songs to play
+                visualizer_running = False  # Stop the visualizer as well
+                cover_art_path = os.path.join(os.path.dirname(__file__), "assets/default_cover.jpg")  # Reset to default cover art path
 
     # ========================================================================
     # RENDERING & DISPLAY
@@ -209,11 +335,11 @@ while True:
     
     # ---- LEFT SIDEBAR: Directory and File Selection ----
     
-    # Draw left sidebar background (dark blue)
-    pygame.draw.rect(screen, (0, 0, 20), (0, 0, song_select_window, SCREEN_HEIGHT))
+    # Draw left sidebar background (light gray for directory/file selection area)
+    pygame.draw.rect(screen, (40, 40, 40), (0, 0, song_select_window, SCREEN_HEIGHT))
 
     # Get directories and files in current folder
-    DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons = get_music_files_and_directories(folder_path, SCREEN_HEIGHT)
+    DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons = get_music_files_and_directories(folder_path, SCREEN_HEIGHT, dir_scroll_offset, file_scroll_offset)
 
     # Create subsurface for folder section (top half of sidebar)
     folder_surf = screen.subsurface(0, 0, song_select_window, SCREEN_HEIGHT)
@@ -222,35 +348,57 @@ while True:
     file_surf = screen.subsurface(0, SCREEN_HEIGHT/2, song_select_window, SCREEN_HEIGHT/2)
 
     # Draw folder list with header
-    text_surface = font.render("Folders:", True, (255, 255, 255))
-    folder_surf.blit(text_surface, (10, 10))
     for directory in DIRECTORY_ONLY:
         text_surface = font.render(directory, True, (255, 255, 255))
-        folder_surf.blit(text_surface, (10, (DIRECTORY_ONLY.index(directory)+1)*40 + 10))
+        folder_surf.blit(text_surface, (10, (DIRECTORY_ONLY.index(directory)+1)*40 + 10 - dir_scroll_offset))
+
+    pygame.draw.rect(screen, (40, 40, 40), (0, 0, song_select_window, 40))
+    text_surface = font.render("Folders:", True, (255, 255, 255))
+    folder_surf.blit(text_surface, (10, 10))
 
     # Draw file list background
-    pygame.draw.rect(screen, (0, 0, 20), (0, SCREEN_HEIGHT/2, song_select_window, SCREEN_HEIGHT/2))
+    pygame.draw.rect(screen, (40, 40, 40), (0, SCREEN_HEIGHT/2, song_select_window, SCREEN_HEIGHT/2))
 
     # Draw file list with header
-    text_surface = font.render("Files:", True, (255, 255, 255))
-    file_surf.blit(text_surface, (10, 10))
     for file in FILES_ONLY:
         text_surface = font.render(file, True, (255, 255, 255))
-        file_surf.blit(text_surface, (10, (FILES_ONLY.index(file)+1)*40 + 10))
+        file_surf.blit(text_surface, (10, (FILES_ONLY.index(file)+1)*40 + 10 - file_scroll_offset))
+
+    pygame.draw.rect(screen, (40, 40, 40), (0, SCREEN_HEIGHT/2, song_select_window, 40))   
+    text_surface = font.render("Files:", True, (255, 255, 255))
+    file_surf.blit(text_surface, (10, 10))
+
+    # Draw scrollbars
+    dir_max_scroll = max(0, len(DIRECTORY_ONLY) * 40 - (SCREEN_HEIGHT/2 - 60))
+    if dir_max_scroll > 0:
+        scrollbar_h = (SCREEN_HEIGHT/2 - 60) * (SCREEN_HEIGHT/2 - 60) / (len(DIRECTORY_ONLY) * 40)
+        scrollbar_y = dir_scroll_offset * (SCREEN_HEIGHT/2 - 60) / (len(DIRECTORY_ONLY) * 40)
+        pygame.draw.rect(screen, (100, 100, 100), 
+                        (song_select_window - 10, scrollbar_y, 8, scrollbar_h))
+
+    file_max_scroll = max(0, len(FILES_ONLY) * 40 - (SCREEN_HEIGHT/2 - 60))
+    if file_max_scroll > 0:
+        scrollbar_h = (SCREEN_HEIGHT/2 - 60) * (SCREEN_HEIGHT/2 - 60) / (len(FILES_ONLY) * 40)
+        scrollbar_y = file_scroll_offset * (SCREEN_HEIGHT/2 - 60) / (len(FILES_ONLY) * 40)
+        pygame.draw.rect(screen, (100, 100, 100), 
+                        (song_select_window - 10, SCREEN_HEIGHT/2 + scrollbar_y, 8, scrollbar_h))
 
     # ---- RIGHT SIDE: Album Cover and Visualizer ----
     
-    # Draw right side background (dark red for album cover area)
-    pygame.draw.rect(screen, (20, 0, 0), (song_select_window, 0, SCREEN_WIDTH - song_select_window, SCREEN_HEIGHT))
+    # Draw right side background (dark gray for album cover area)
+    pygame.draw.rect(screen, (20, 20, 20), (song_select_window, 0, SCREEN_WIDTH - song_select_window, SCREEN_HEIGHT))
     
     # Draw back button (small gray square)
-    pygame.draw.rect(screen, (64, 64, 64), (SCREEN_WIDTH/5-25, 5, 20, 20))
+    pygame.draw.rect(screen, back_button_color, (SCREEN_WIDTH/5-25, 5, 20, 20))
 
-    #draw play/pause button (small gray square)
-    pygame.draw.rect(screen, (64, 64, 64), ((SCREEN_WIDTH-SCREEN_WIDTH/5)/2-25+SCREEN_WIDTH/5, SCREEN_HEIGHT-30, 50, 20))
+    #draw media control buttons (small gray rectangles)
+    pygame.draw.rect(screen, play_pause_button_color, ((SCREEN_WIDTH-SCREEN_WIDTH/5)/2-25+SCREEN_WIDTH/5, SCREEN_HEIGHT-30, 50, 20))
+    pygame.draw.rect(screen, skip_button_color, ((SCREEN_WIDTH-SCREEN_WIDTH/5)/2+30+SCREEN_WIDTH/5, SCREEN_HEIGHT-30, 50, 20))
+    pygame.draw.rect(screen, previous_button_color, ((SCREEN_WIDTH-SCREEN_WIDTH/5)/2-80+SCREEN_WIDTH/5, SCREEN_HEIGHT-30, 50, 20))
+    pygame.draw.rect(screen, shuffle_button_color, ((SCREEN_WIDTH-SCREEN_WIDTH/5)/2-135+SCREEN_WIDTH/5, SCREEN_HEIGHT-30, 50, 20))
 
     # Load and display album cover art, centered on right side
-    album_cover = pygame.image.load(os.path.join(os.path.dirname(__file__), "temp_cover_art/temp_cover.png"))
+    album_cover = pygame.image.load(cover_art_path)
     image_rect = album_cover.get_rect()
     # Center the cover image on the right side of the screen
     image_rect.center = ((SCREEN_WIDTH-(SCREEN_WIDTH/5))/2+SCREEN_WIDTH/5, SCREEN_HEIGHT/2)
@@ -261,30 +409,33 @@ while True:
     # Display currently playing song name
     if STARTED:
         text_surface = font.render("Now Playing: " + PLAYING_SONG, True, (255, 255, 255))
-        screen.blit(text_surface, ((SCREEN_WIDTH-song_select_window)/2+song_select_window-(13+len(PLAYING_SONG))*7, 10))
+        screen.blit(text_surface, ((SCREEN_WIDTH-song_select_window)/2+SCREEN_WIDTH/5-(13+len(PLAYING_SONG))*7, SCREEN_HEIGHT/2 + render_size[1]/2 + 10))
 
     # Update album cover if screen size changed
     if SIZE != OLD_SIZE:
-        render_size = get_cover_art(os.path.join(folder_path, PLAYING_SONG), SIZE)
+        render_size, cover_art_path = get_cover_art(os.path.join(currently_playing_folder_path, PLAYING_SONG), SIZE)
 
     OLD_SIZE = SIZE
     
     # ---- WAVE VISUALIZATION RENDERING ----
     
-    # Render wave visualization on the right side
-    if visualizer and visualizer_running:
-        # Create a subsurface for the visualizer (right side of screen)
-        vis_surface = screen.subsurface(song_select_window+(((SCREEN_WIDTH-song_select_window)/2-render_size[0]/2)), 0,
+    try:
+        # Render wave visualization on the right side
+        if visualizer and visualizer_running:
+            # Create a subsurface for the visualizer (right side of screen)
+            vis_surface = screen.subsurface(song_select_window+(((SCREEN_WIDTH-song_select_window)/2-render_size[0]/2)), 0,
                                         render_size[0], SCREEN_HEIGHT/2+render_size[1]/2)
-        
-        # Render one frame of the wave visualization
-        if not visualizer.render_frame(vis_surface, mouse_pos):
-            visualizer_running = False  # Song finished, stop rendering
-    
-    # Update visualizer render position if window was resized
-    if visualizer:
-        visualizer.update_render_size(int(render_size[0]), 
-                                    int((SCREEN_HEIGHT/2)+(render_size[1]/2)))
+            
+            # Render one frame of the wave visualization
+            if not visualizer.render_frame(vis_surface, mouse_pos):
+                visualizer_running = False  # Song finished, stop rendering
+            
+            # Update visualizer render position if window was resized
+            if visualizer:
+                visualizer.update_render_size(int(render_size[0]), 
+                                            int((SCREEN_HEIGHT/2)+(render_size[1]/2)))
+    except:
+        pass # give the visualizer some time to initialize before trying to create the subsurface for it, ignore errors if it fails at first
 
     # ---- UPDATE DISPLAY ----
     
