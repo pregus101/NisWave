@@ -6,6 +6,8 @@
 
 import pygame
 import os
+import threading
+from pynput.keyboard import Key, Listener
 from screeninfo import get_monitors
 import sys
 from platformdirs import user_music_dir
@@ -27,6 +29,30 @@ temp = temp[0] + temp[1]
 temp = temp.split(", width_mm=")
 temp = temp[0]
 temp = temp.split(", ")
+
+# Set up media inputs
+global media_input
+media_input = ""
+data_lock = threading.Lock()
+
+def on_press(key):
+    global media_input
+    with data_lock:
+        media_input = key
+    
+
+def on_release(key):
+    global media_input
+    with data_lock:
+        media_input = ""
+
+def listening():
+    # Start the listener
+    # The listener runs in a separate thread, use .join() to prevent the script from exiting immediately
+    with Listener(on_press=on_press, on_release=on_release) as listener:
+        listener.join()
+
+threading.Thread(target=listening).start()
 
 # Initialize Pygame and font
 pygame.init()
@@ -89,6 +115,8 @@ shuffle_button_color = (64, 64, 64)  # Default gray for shuffle button
 previous_button_color = (64, 64, 64)  # Default gray for previous button
 
 
+old_input = ""
+
 # # Create the queue for auto-playing songs (will be populated with files from the current directory)
 # DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons = get_music_files_and_directories(folder_path, SCREEN_HEIGHT)
 # queue = FILES_ONLY.copy()  # Initialize queue with available songs in the current directory
@@ -98,7 +126,7 @@ previous_button_color = (64, 64, 64)  # Default gray for previous button
 # ============================================================================
 while True:
     # Calculate album cover size based on screen resolution for scaling
-    SIZE = int(640 * ((SCREEN_WIDTH * SCREEN_HEIGHT) / (1920 * 1147)))
+    SIZE = int(640 * ((SCREEN_WIDTH/1920 + SCREEN_HEIGHT/1147) / 2))
     mouse_pos = pygame.mouse.get_pos()
     
     # ========================================================================
@@ -284,6 +312,31 @@ while True:
                         pass  # Visualizer may not be initialized yet, ignore if error occurs
                         STARTED = False
 
+    with data_lock:
+        if not old_input == media_input:
+            old_input = media_input
+            if media_input == Key.media_play_pause and visualizer:
+                    if play_pause == "play" and STARTED:
+                        pygame.mixer.music.pause()
+                        STARTED = False
+                        play_pause = "pause"
+                        try:
+                            WaveVisualizer.set_pause_state(visualizer, True)  # Pause the visualizer
+                        except:
+                            pass  # Visualizer may not be initialized yet, ignore if error occurs
+                    else:
+                        pygame.mixer.music.unpause()
+                        STARTED = True
+                        play_pause = "play"
+                        try:
+                            WaveVisualizer.set_pause_state(visualizer, False)  # Unpause the visualizer
+                        except:
+                            pass  # Visualizer may not be initialized yet, ignore if error occurs
+                            STARTED = False
+
+
+        
+
     # ========================================================================
     # AUTO-PLAY & QUEUE MANAGEMENT
     # ========================================================================
@@ -441,4 +494,8 @@ while True:
     
     # Refresh the display with all rendered elements
     pygame.display.flip()
+
+pygame.quit()
+sys.exit()
+
 
