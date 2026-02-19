@@ -15,7 +15,7 @@ def get_music_files_and_directories(folder_path, SCREEN_HEIGHT, dir_scroll=0, fi
 
     supported_formats = ['.mp3', '.wav', '.flac', '.aac', '.ogg'] #, '.m4a']
     FILES_ONLY = [
-        entry for entry in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, entry)) and os.path.splitext(entry)[1].lower() in supported_formats
+        entry for entry in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, entry)) and os.path.splitext(entry)[1].lower() in supported_formats and not(entry[0:] == ".")
     ]
 
     file_buttons = []

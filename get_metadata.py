@@ -1,6 +1,7 @@
 import os
 from mutagen.mp3 import MP3
 from mutagen.id3 import ID3, APIC
+from mutagen.easyid3 import EasyID3
 from PIL import Image
 
 def get_cover_art(mp3_file_path, size=640, output_dir=os.path.join(os.path.dirname(__file__), "temp_cover_art")):
@@ -86,3 +87,11 @@ def get_cover_art(mp3_file_path, size=640, output_dir=os.path.join(os.path.dirna
         img.save(output_path)
 
         return [size, size], output_path
+    
+def get_artist(mp3_file_path):
+    # Load the MP3 file with mutagen
+    try:
+        audio = EasyID3(mp3_file_path)
+        return audio.get('artist', ['Unknown Artist'])[0]
+    except:
+        return 'Unknown Artist'

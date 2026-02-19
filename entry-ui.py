@@ -14,7 +14,8 @@ from platformdirs import user_music_dir
 from pathlib import Path
 import random
 from get_files import get_music_files_and_directories
-from update_image import get_cover_art
+from get_metadata import get_cover_art
+from get_metadata import get_artist
 from wave_renderer import WaveVisualizer 
 from queue_handler import shuffler
 from queue_handler import generated_unshuffled_queue
@@ -299,8 +300,9 @@ while True:
                         # queue.remove(button[1])
                         PLAYING_SONG = button[1]
 
-                        # Get album cover art for the selected track
+                        # Get metadata for the selected track
                         render_size, cover_art_path = get_cover_art(file_path, SIZE)
+                        print(get_artist(file_path))
 
                         # CREATE AND START WAVE VISUALIZER
                         visualizer = WaveVisualizer(file_path, 
