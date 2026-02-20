@@ -42,7 +42,7 @@ def on_press(key):
     global media_input
     with data_lock:
         media_input = key
-    time.sleep(1)
+    time.sleep(0.03)  # Small delay to prevent multiple rapid inputs
     with data_lock:
         media_input = ''
     
@@ -56,11 +56,8 @@ def on_release(key):
 def listening():
     # Start the listener
     # The listener runs in a separate thread, use .join() to prevent the script from exiting immediately
-    with Listener(on_press=on_press, on_release=on_release) as listener:
+    with Listener(on_press=on_press) as listener:
         listener.join()
-
-    with data_lock:
-        media_input = ''
 
 threading.Thread(target=listening).start()
 
@@ -129,7 +126,7 @@ cover_art_path = os.path.join(os.path.dirname(__file__), "assets/default_cover.j
 
 # set defualt button colors
 skip_button_color = (64, 64, 64)  # Default gray for skip button
-play_pause_button_color = (64, 64, 64)  # Default gray for play/pause button
+play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")  # Default image for play/pause button
 back_button_color = (64, 64, 64)  # Default gray for back button
 shuffle_button_color = (64, 64, 64)  # Default gray for shuffle button
 previous_button_color = (64, 64, 64)  # Default gray for previous button
@@ -168,10 +165,16 @@ while True:
 
 
             # change play/pause button color on hover
-            if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-25+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+25+SCREEN_WIDTH/5 and SCREEN_HEIGHT-50 <= mouse_pos[1] <= SCREEN_HEIGHT-30:
-                play_pause_button_color = (128, 128, 128)  # Lighter gray on hover
+            if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-25+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+25+SCREEN_WIDTH/5 and SCREEN_HEIGHT-75 <= mouse_pos[1] <= SCREEN_HEIGHT-25:
+                if play_pause == "play" and STARTED:
+                    play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause_hover.jpg")  # 
+                else:
+                    play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play_hover.jpg")  # 
             else:        
-                play_pause_button_color = (64, 64, 64)  # Default gray 
+                if play_pause == "play" and STARTED:
+                    play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Default image for play button
+                else:
+                    play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")  # Default image for pause button
 
             # Change back button color on hover
             if SCREEN_WIDTH/5-40 <= mouse_pos[0] <= SCREEN_WIDTH/5-20 and 5 <= mouse_pos[1] <= 25:
@@ -269,6 +272,7 @@ while True:
                             WaveVisualizer.set_pause_state(visualizer, True)  # Pause the visualizer
                         except:
                             pass  # Visualizer may not be initialized yet, ignore if error occurs
+                        play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")  # Default image for play button
                     else:
                         STARTED = True
                         play_pause = "play"
@@ -277,6 +281,7 @@ while True:
                         except:
                             pass  # Visualizer may not be initialized yet, ignore if error occurs
                             STARTED = False
+                        play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Default image for pause button
                             
 
                 # Check if shuffle button was clicked
@@ -354,6 +359,7 @@ while True:
                         WaveVisualizer.set_pause_state(visualizer, True)  # Pause the visualizer
                     except:
                         pass  # Visualizer may not be initialized yet, ignore if error occurs
+                    play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")  # Default image for play button
                 else:
                     pygame.mixer.music.unpause()
                     STARTED = True
@@ -363,6 +369,7 @@ while True:
                     except:
                         pass  # Visualizer may not be initialized yet, ignore if error occurs
                         STARTED = False
+                    play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Default image for pause button
 
     with data_lock:
         if not old_input == media_input:
@@ -376,6 +383,7 @@ while True:
                             WaveVisualizer.set_pause_state(visualizer, True)  # Pause the visualizer
                         except:
                             pass  # Visualizer may not be initialized yet, ignore if error occurs
+                        play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")  # Default image for play button
                     else:
                         pygame.mixer.music.unpause()
                         STARTED = True
@@ -385,6 +393,7 @@ while True:
                         except:
                             pass  # Visualizer may not be initialized yet, ignore if error occurs
                             STARTED = False
+                        play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Default image for pause button
 
             if media_input == Key.media_next and STARTED:
                 pygame.mixer.music.stop()
@@ -556,10 +565,8 @@ while True:
 
     #draw media control buttons (small gray rectangles)
     # pygame.draw.rect(screen, play_pause_button_color, ((SCREEN_WIDTH-SCREEN_WIDTH/5)/2-25+SCREEN_WIDTH/5, SCREEN_HEIGHT-30, 50, 20))
-    if play_pause == "pause":
-        play_button = pygame.image.load(os.path.join(os.path.dirname(__file__), "assets/Play_play.jpg"))
-    else:
-        play_button = pygame.image.load(os.path.join(os.path.dirname(__file__), "assets/Play_pause.jpg"))
+
+    play_button = pygame.image.load(play_pause_button_path)
 
     play_button_rect = play_button.get_rect()
     play_button_rect.center = ((SCREEN_WIDTH-SCREEN_WIDTH/5)/2+SCREEN_WIDTH/5, SCREEN_HEIGHT-50)
