@@ -42,6 +42,10 @@ def on_press(key):
     global media_input
     with data_lock:
         media_input = key
+    time.sleep(1)
+    with data_lock:
+        media_input = ''
+    
     
 
 def on_release(key):
@@ -54,6 +58,9 @@ def listening():
     # The listener runs in a separate thread, use .join() to prevent the script from exiting immediately
     with Listener(on_press=on_press, on_release=on_release) as listener:
         listener.join()
+
+    with data_lock:
+        media_input = ''
 
 threading.Thread(target=listening).start()
 
