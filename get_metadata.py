@@ -37,9 +37,9 @@ def get_cover_art(mp3_file_path, size=640, output_dir=os.path.join(os.path.dirna
                     continue
                 
                 # Create the output filename
-                track_title = audio.get('TIT2', ['temp'])[0]
-                output_filename = f"{track_title.replace('/', '_')}_cover.{ext}"
-                output_path = os.path.join(output_dir, output_filename)
+                # track_title = audio.get('TIT2', ['temp'])[0]
+                # output_filename = f"{track_title.replace('/', '_')}_cover.{ext}"
+                output_path = os.path.join(output_dir, "temp_cover." + ext)
 
                 # Write the image data to a file
                 with open(output_path, 'wb') as img_file:
