@@ -12,13 +12,13 @@ from screeninfo import get_monitors
 import sys
 from platformdirs import user_music_dir
 from pathlib import Path
-import random
 from get_files import get_music_files_and_directories
 from get_metadata import get_cover_art
 from get_metadata import get_artist
 from wave_renderer import WaveVisualizer 
 from queue_handler import shuffler
 from queue_handler import generated_unshuffled_queue
+import time
 
 # =============================================================================
 # Screen Initialization
@@ -56,6 +56,10 @@ def listening():
         listener.join()
 
 threading.Thread(target=listening).start()
+
+# Set up button rate limit (Because someone stalled my program by spamming the back button. Thanks [REDACTED] :D)
+last_button_press_time = 0
+button_press_cooldown = 0.5  # Cooldown time in seconds
 
 # Initialize Pygame and font
 pygame.init()
@@ -150,7 +154,7 @@ while True:
             mouse_pos = event.pos  # Update mouse position on movement
 
             if shuffle:
-                shuffle_button_color = (64, 128, 64) if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-135+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-85+SCREEN_WIDTH/5 and SCREEN_HEIGHT-50 <= mouse_pos[1] <= SCREEN_HEIGHT-30 else (32, 64, 32)  # Change shuffle button color on hover
+                shuffle_button_color = (64, 255, 64) if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-135+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-85+SCREEN_WIDTH/5 and SCREEN_HEIGHT-50 <= mouse_pos[1] <= SCREEN_HEIGHT-30 else (64, 128, 64)  # Change shuffle button color on hover
             else:
                 shuffle_button_color = (128, 128, 128) if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-135+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-85+SCREEN_WIDTH/5 and SCREEN_HEIGHT-50 <= mouse_pos[1] <= SCREEN_HEIGHT-30 else (64, 64, 64)  # Change shuffle button color on hover
 
@@ -182,10 +186,14 @@ while True:
 
         # Handle mouse button clicks (folder/file selection and navigation)
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:  # Left mouse button only
+            if event.button == 1 and time.time() - last_button_press_time > button_press_cooldown:  # Left mouse button only
+                last_button_press_time = time.time()
                 # Get current directory contents for button interaction
                 
-                DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons = get_music_files_and_directories(folder_path, SCREEN_HEIGHT, dir_scroll_offset, file_scroll_offset)
+                try:
+                    DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons = get_music_files_and_directories(folder_path, SCREEN_HEIGHT, dir_scroll_offset, file_scroll_offset)
+                except Exception as e:
+                    print("Error accessing directory contents for button interaction:", e)
 
                 # Debug output (can be removed later)
                 print(SCREEN_WIDTH/5-25 <= mouse_pos[0] <= SCREEN_WIDTH/5-5 and 5 <= mouse_pos[1] <= 25)
@@ -369,7 +377,47 @@ while True:
                             pass  # Visualizer may not be initialized yet, ignore if error occurs
                             STARTED = False
 
+            if media_input == Key.media_next and STARTED:
+                pygame.mixer.music.stop()
 
+            if media_input == Key.media_previous and STARTED:
+                if current_time_sec <= 10:
+                    try:
+                        file_path = os.path.join(currently_playing_folder_path, played_songs[-1])
+                        skip = False
+                    except:
+                        skip = True
+
+                        print(skip)
+                    
+                    if not skip:
+                        STARTED = True
+                        PLAYING_SONG = os.path.basename(file_path)
+
+                        played_songs.remove(PLAYING_SONG)
+                        queue_raw.insert(0, PLAYING_SONG)  # Add current song back to the front of the queue_raw
+                        queue.insert(0, PLAYING_SONG)
+                            
+                        # Get album cover art for the selected track
+                        render_size, cover_art_path = get_cover_art(file_path, SIZE)
+
+                        # CREATE AND START WAVE VISUALIZER
+                        visualizer = WaveVisualizer(file_path, 
+                                                    render_size[0], 
+                                                    render_size[1])
+                        # Set wave color to contrast with album cover
+                        cover_art_path = os.path.join(os.path.dirname(__file__), "temp_cover_art/temp_cover.png")
+                        visualizer.set_color_from_image(cover_art_path)
+                        visualizer.load_audio()
+                        visualizer.play()
+
+                else:
+                    # CREATE AND START WAVE VISUALIZER
+                    visualizer = WaveVisualizer(file_path, 
+                                                render_size[0], 
+                                                render_size[1])
+                    visualizer.load_audio()
+                    visualizer.play()
         
 
     # ========================================================================
@@ -438,8 +486,11 @@ while True:
     # Draw left sidebar background (light gray for directory/file selection area)
     pygame.draw.rect(screen, (40, 40, 40), (0, 0, song_select_window, SCREEN_HEIGHT))
 
-    # Get directories and files in current folder
-    DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons = get_music_files_and_directories(folder_path, SCREEN_HEIGHT, dir_scroll_offset, file_scroll_offset)
+    try:
+        # Get directories and files in current folder
+        DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons = get_music_files_and_directories(folder_path, SCREEN_HEIGHT, dir_scroll_offset, file_scroll_offset)
+    except Exception as e:
+        print("Error accessing directory contents for rendering:", e)
 
     # Create subsurface for folder section (top half of sidebar)
     folder_surf = screen.subsurface(0, 0, song_select_window, SCREEN_HEIGHT)

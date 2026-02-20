@@ -18,7 +18,6 @@ def shuffler(queue, current_song, first=False):
     return shuffled_queue
 
 def generated_unshuffled_queue(current_song, queue_defualt):
-    print("Def", queue_defualt)
     if queue_defualt:
         current_index = queue_defualt.index(current_song)
         queue = queue_defualt.copy()
