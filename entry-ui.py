@@ -75,7 +75,8 @@ for i in range(0, len(temp)):
 default_width, default_height = default_screen_size
 
 # Get initial music directory path
-folder_path = Path(user_music_dir())
+folder_path = user_music_dir()
+og_folder = folder_path
 currently_playing_folder_path = folder_path
 
 # Set up the display window
@@ -191,9 +192,9 @@ while True:
                 # Get current directory contents for button interaction
                 
                 try:
-                    DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons = get_music_files_and_directories(folder_path, SCREEN_HEIGHT, dir_scroll_offset, file_scroll_offset)
+                    DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, folder_path = get_music_files_and_directories(folder_path, SCREEN_HEIGHT, og_folder, dir_scroll_offset, file_scroll_offset)
                 except Exception as e:
-                    DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons = get_music_files_and_directories(user_music_dir(), SCREEN_HEIGHT, dir_scroll_offset, file_scroll_offset)
+                    DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, folder_path = get_music_files_and_directories(og_folder, SCREEN_HEIGHT, og_folder, dir_scroll_offset, file_scroll_offset)
                     print("Error accessing directory contents for button interaction:", e)
 
                 # Debug output (can be removed later)
@@ -489,9 +490,9 @@ while True:
 
     try:
         # Get directories and files in current folder
-        DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons = get_music_files_and_directories(folder_path, SCREEN_HEIGHT, dir_scroll_offset, file_scroll_offset)
+        DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, folder_path = get_music_files_and_directories(folder_path, SCREEN_HEIGHT, og_folder, dir_scroll_offset, file_scroll_offset)
     except Exception as e:
-        DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons = get_music_files_and_directories(user_music_dir(), SCREEN_HEIGHT, dir_scroll_offset, file_scroll_offset)
+        DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, folder_path = get_music_files_and_directories(og_folder, SCREEN_HEIGHT, og_folder, dir_scroll_offset, file_scroll_offset)
 
     # Create subsurface for folder section (top half of sidebar)
     folder_surf = screen.subsurface(0, 0, song_select_window, SCREEN_HEIGHT)
