@@ -27,5 +27,6 @@ def get_music_files_and_directories(folder_path, SCREEN_HEIGHT, dir_scroll=0, fi
                 file_buttons.append([y_pos, file])
 
         return DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons
-    except:
-        print("access denied")
+    except Exception as e:
+        print("access denied:", e)
+        return

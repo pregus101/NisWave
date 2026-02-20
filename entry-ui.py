@@ -193,6 +193,7 @@ while True:
                 try:
                     DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons = get_music_files_and_directories(folder_path, SCREEN_HEIGHT, dir_scroll_offset, file_scroll_offset)
                 except Exception as e:
+                    DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons = get_music_files_and_directories(user_music_dir(), SCREEN_HEIGHT, dir_scroll_offset, file_scroll_offset)
                     print("Error accessing directory contents for button interaction:", e)
 
                 # Debug output (can be removed later)
@@ -490,7 +491,7 @@ while True:
         # Get directories and files in current folder
         DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons = get_music_files_and_directories(folder_path, SCREEN_HEIGHT, dir_scroll_offset, file_scroll_offset)
     except Exception as e:
-        print("Error accessing directory contents for rendering:", e)
+        DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons = get_music_files_and_directories(user_music_dir(), SCREEN_HEIGHT, dir_scroll_offset, file_scroll_offset)
 
     # Create subsurface for folder section (top half of sidebar)
     folder_surf = screen.subsurface(0, 0, song_select_window, SCREEN_HEIGHT)

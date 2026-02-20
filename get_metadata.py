@@ -18,7 +18,7 @@ def get_cover_art(mp3_file_path, size=640, output_dir=os.path.join(os.path.dirna
         # Check if there are any ID3 tags
         if not audio.tags:
             print(f"No ID3 tags found in {mp3_file_path}")
-            return
+            return [size, size], os.path.join(os.path.dirname(__file__), "assets/default_cover.jpg")
 
         # Iterate over the tags to find the album art (APIC tag)
         for tag in audio.tags.getall('APIC'):
