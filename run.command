@@ -1,4 +1,4 @@
-pip install -r requirements.txt
 #!/bin/bash
 cd "$(dirname "$0")"
+pip install -r requirements.txt
 python3 entry-ui.py
