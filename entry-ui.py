@@ -105,7 +105,7 @@ play_pause = "play"  # Can be "play" or "pause"
 shuffle = False  # Shuffle mode state
 
 # Initialize the played songs
-played_songs = []
+played_songs = {}  # Dictionary to track played songs and their indices in the queue_raw
 
 # Scroll state variables
 dir_scroll_offset = 0  # Vertical offset for directories
@@ -215,20 +215,22 @@ while True:
                     
                     if current_time_sec <= 10:
                         try:
-                            file_path = os.path.join(currently_playing_folder_path, played_songs[-1])
+                            file_path = os.path.join(currently_playing_folder_path, list(played_songs.keys())[-1])
                             skip = False
                         except:
                             skip = True
 
                             print(skip)
+
+                            print("Played songs dictionary:", played_songs)
                         
                         if not skip:
                             STARTED = True
                             PLAYING_SONG = os.path.basename(file_path)
 
-                            played_songs.remove(PLAYING_SONG)
-                            queue_raw.insert(0, PLAYING_SONG)  # Add current song back to the front of the queue_raw
+                            queue_raw.insert(played_songs[PLAYING_SONG], PLAYING_SONG)  # Add current song back to the front of the queue_raw
                             queue.insert(0, PLAYING_SONG)
+                            played_songs.pop(PLAYING_SONG, None) # Remove the song from played_songs dictionary
                                 
                             # Get album cover art for the selected track
                             render_size, cover_art_path = get_cover_art(file_path, SIZE)
@@ -307,7 +309,7 @@ while True:
                             queue = queue_raw.copy()
                         
                         play_pause = "play"  # Reset play/pause state to "play" when a new song is selected
-                        played_songs = []  # Clear the list of played songs when a new song is selected
+                        played_songs = {}  # Clear the list of played songs when a new song is selected
                         
                         # Load and play the selected file
                         file_path = os.path.join(folder_path, button[1])
@@ -409,14 +411,14 @@ while True:
                     STARTED = True
                     PLAYING_SONG = os.path.basename(file_path)
 
-                    played_songs.remove(PLAYING_SONG)
-                    queue_raw.insert(0, PLAYING_SONG)  # Add current song back to the front of the queue_raw
+                    queue_raw.insert(played_songs[PLAYING_SONG], PLAYING_SONG)  # Add current song back to the front of the queue_raw
                     queue.insert(0, PLAYING_SONG)
+                    played_songs.pop(PLAYING_SONG, None)  # Remove the song from played_songs dictionary
                         
                     # Get album cover art for the selected track
                     render_size, cover_art_path = get_cover_art(file_path, SIZE)
 
-                    # CREATE AND START WAVE VISUALIZER
+                    # CREATE AND START WAVE VISUALIZER   
                     visualizer = WaveVisualizer(file_path, 
                                                 render_size[0], 
                                                 render_size[1])
@@ -444,6 +446,7 @@ while True:
         if not pygame.mixer.music.get_busy():
 
             try:
+                played_songs[PLAYING_SONG] = queue_raw.index(PLAYING_SONG)  # Add the previous song to the played_songs dictionary with its index
                 queue_raw.remove(PLAYING_SONG)
                 queue.remove(PLAYING_SONG)
             except:
@@ -454,7 +457,6 @@ while True:
             file_path = os.path.join(currently_playing_folder_path, newsong)
             if os.path.isfile(file_path):
 
-                played_songs.append(PLAYING_SONG)  # Add the previous song to the list of played songs
                 PLAYING_SONG = newsong
 
                 # queue_raw.remove(newsong)
