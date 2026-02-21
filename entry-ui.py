@@ -18,6 +18,7 @@ from get_metadata import get_artist
 from wave_renderer import WaveVisualizer 
 from queue_handler import shuffler
 from queue_handler import generated_unshuffled_queue
+from draw_song_length_bar import SongLengthBar
 import time
 
 # =============================================================================
@@ -120,9 +121,6 @@ play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pl
 back_button_color = (64, 64, 64)  # Default gray for back button
 shuffle_button_color = (64, 64, 64)  # Default gray for shuffle button
 previous_button_color = (64, 64, 64)  # Default gray for previous button
-
-
-old_input = ""
 
 # # Create the queue for auto-playing songs (will be populated with files from the current directory)
 # DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons = get_music_files_and_directories(folder_path, SCREEN_HEIGHT)
@@ -319,6 +317,10 @@ while True:
                         # queue.remove(button[1])
                         PLAYING_SONG = button[1]
 
+                        # Load the sound file as a Sound object to get its length
+                        temp_sound_object = pygame.mixer.Sound(file_path)
+                        total_length = temp_sound_object.get_length() # Length in seconds
+
                         # Get metadata for the selected track
                         render_size, cover_art_path = get_cover_art(file_path, SIZE)
                         print(get_artist(file_path))
@@ -464,6 +466,11 @@ while True:
 
                 # Get cover art and update visualizer for the new song
                 render_size, cover_art_path = get_cover_art(file_path, SIZE)
+
+                # Load the sound file as a Sound object to get its length
+                temp_sound_object = pygame.mixer.Sound(file_path)
+                total_length = temp_sound_object.get_length() # Length in seconds
+
                 
                 # UPDATE VISUALIZER FOR NEW SONG
                 visualizer = WaveVisualizer(file_path, 
@@ -587,9 +594,20 @@ while True:
     # ---- NOW PLAYING INFO ----
     
     # Display currently playing song name
-    if STARTED:
+    try:
         text_surface = font.render("Now Playing: " + PLAYING_SONG, True, (255, 255, 255))
-        screen.blit(text_surface, ((SCREEN_WIDTH-song_select_window)/2+SCREEN_WIDTH/5-(13+len(PLAYING_SONG))*7, SCREEN_HEIGHT/2 + render_size[1]/2 + 10))
+        screen.blit(text_surface, ((SCREEN_WIDTH-song_select_window)/2+SCREEN_WIDTH/5-(13+len(PLAYING_SONG)*7), SCREEN_HEIGHT/2 + render_size[1]/2 + 10))
+        text_surface = font.render("Artist: " + get_artist(os.path.join(currently_playing_folder_path, PLAYING_SONG)), True, (255, 255, 255))
+        screen.blit(text_surface, ((SCREEN_WIDTH-song_select_window)/2+SCREEN_WIDTH/5-(13+len(get_artist(os.path.join(currently_playing_folder_path, PLAYING_SONG)))*7), SCREEN_HEIGHT/2 + render_size[1]/2 + 50))
+    except:
+        print("Error rendering now playing info")
+
+    # Draw/update the song length bar
+    try:
+        song_length_bar = SongLengthBar(total_length, current_time_sec, SCREEN_WIDTH, SCREEN_HEIGHT, screen)
+        song_length_bar.update(current_time_sec, total_length, SCREEN_WIDTH, SCREEN_HEIGHT, screen)
+    except:
+        pass
 
     # Update album cover if screen size changed
     if SIZE != OLD_SIZE:

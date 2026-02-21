@@ -41,7 +41,7 @@ CHANNELS = 2
 RATE = 96000
 BLOCKSIZE = 4096  # Larger window for smoother FFT
 DURATION = 0.04
-SMOOTHING_FACTOR = 0.7  # Higher = smoother, closer to 1 means slower response
+SMOOTHING_FACTOR = 0.85  # Higher = smoother, closer to 1 means slower response
 DECAY_RATE = 0.95  # How quickly bars fall (closer to 1 = slower fall)
 # ----------------------
 
