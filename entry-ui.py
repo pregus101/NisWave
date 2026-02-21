@@ -35,23 +35,13 @@ temp = temp.split(", ")
 
 # Set up media inputs
 global media_input
-media_input = ""
+media_input = []
 data_lock = threading.Lock()
 
 def on_press(key):
     global media_input
     with data_lock:
-        media_input = key
-    time.sleep(0.03)  # Small delay to prevent multiple rapid inputs
-    with data_lock:
-        media_input = ''
-    
-    
-
-def on_release(key):
-    global media_input
-    with data_lock:
-        media_input = ""
+        media_input.append(key)
 
 def listening():
     # Start the listener
@@ -68,8 +58,8 @@ button_press_cooldown = 0.5  # Cooldown time in seconds
 # Initialize Pygame and font
 pygame.init()
 pygame.mixer.init()  # Initialize mixer for audio playback
-pygame.font.init()
-font = pygame.font.SysFont('Arial', 30)
+pygame.font.init()  # Initialize font module and load custom font
+font = pygame.font.SysFont(os.path.join(os.path.dirname(__file__), "Cyberbit.ttf"), 30)
 
 # Extract and store screen dimensions
 default_screen_size = []
@@ -272,16 +262,21 @@ while True:
                             WaveVisualizer.set_pause_state(visualizer, True)  # Pause the visualizer
                         except:
                             pass  # Visualizer may not be initialized yet, ignore if error occurs
-                        play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")  # Default image for play button
+                        play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play_hover.jpg")  # Default image for play button
                     else:
                         STARTED = True
                         play_pause = "play"
+                        
                         try:
                             WaveVisualizer.set_pause_state(visualizer, False)  # Unpause the visualizer
                         except:
                             pass  # Visualizer may not be initialized yet, ignore if error occurs
                             STARTED = False
-                        play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Default image for pause button
+                            visualizer_running = False
+                            visualizer = None  # Reset visualizer instance when stopping playback
+
+                        if STARTED:
+                            play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause_hover.jpg")  # Default image for pause button
                             
 
                 # Check if shuffle button was clicked
@@ -372,70 +367,72 @@ while True:
                     play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Default image for pause button
 
     with data_lock:
-        if not old_input == media_input:
-            old_input = media_input
-            if media_input == Key.media_play_pause and visualizer:
-                    if play_pause == "play" and STARTED:
-                        pygame.mixer.music.pause()
-                        STARTED = False
-                        play_pause = "pause"
-                        try:
-                            WaveVisualizer.set_pause_state(visualizer, True)  # Pause the visualizer
-                        except:
-                            pass  # Visualizer may not be initialized yet, ignore if error occurs
-                        play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")  # Default image for play button
-                    else:
-                        pygame.mixer.music.unpause()
-                        STARTED = True
-                        play_pause = "play"
-                        try:
-                            WaveVisualizer.set_pause_state(visualizer, False)  # Unpause the visualizer
-                        except:
-                            pass  # Visualizer may not be initialized yet, ignore if error occurs
-                            STARTED = False
-                        play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Default image for pause button
+        input_key = media_input[0] if media_input else None
+        media_input = media_input[1:]
 
-            if media_input == Key.media_next and STARTED:
-                pygame.mixer.music.stop()
-
-            if media_input == Key.media_previous and STARTED:
-                if current_time_sec <= 10:
+    if input_key:
+        if input_key == Key.media_play_pause and visualizer:
+                if play_pause == "play" and STARTED:
+                    pygame.mixer.music.pause()
+                    STARTED = False
+                    play_pause = "pause"
                     try:
-                        file_path = os.path.join(currently_playing_folder_path, played_songs[-1])
-                        skip = False
+                        WaveVisualizer.set_pause_state(visualizer, True)  # Pause the visualizer
                     except:
-                        skip = True
-
-                        print(skip)
-                    
-                    if not skip:
-                        STARTED = True
-                        PLAYING_SONG = os.path.basename(file_path)
-
-                        played_songs.remove(PLAYING_SONG)
-                        queue_raw.insert(0, PLAYING_SONG)  # Add current song back to the front of the queue_raw
-                        queue.insert(0, PLAYING_SONG)
-                            
-                        # Get album cover art for the selected track
-                        render_size, cover_art_path = get_cover_art(file_path, SIZE)
-
-                        # CREATE AND START WAVE VISUALIZER
-                        visualizer = WaveVisualizer(file_path, 
-                                                    render_size[0], 
-                                                    render_size[1])
-                        # Set wave color to contrast with album cover
-                        cover_art_path = os.path.join(os.path.dirname(__file__), "temp_cover_art/temp_cover.png")
-                        visualizer.set_color_from_image(cover_art_path)
-                        visualizer.load_audio()
-                        visualizer.play()
-
+                        pass  # Visualizer may not be initialized yet, ignore if error occurs
+                    play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")  # Default image for play button
                 else:
+                    pygame.mixer.music.unpause()
+                    STARTED = True
+                    play_pause = "play"
+                    try:
+                        WaveVisualizer.set_pause_state(visualizer, False)  # Unpause the visualizer
+                    except:
+                        pass  # Visualizer may not be initialized yet, ignore if error occurs
+                        STARTED = False
+                    play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Default image for pause button
+
+        if input_key == Key.media_next and STARTED:
+            pygame.mixer.music.stop()
+
+        if input_key == Key.media_previous and STARTED:
+            if current_time_sec <= 10:
+                try:
+                    file_path = os.path.join(currently_playing_folder_path, played_songs[-1])
+                    skip = False
+                except:
+                    skip = True
+
+                    print(skip)
+                
+                if not skip:
+                    STARTED = True
+                    PLAYING_SONG = os.path.basename(file_path)
+
+                    played_songs.remove(PLAYING_SONG)
+                    queue_raw.insert(0, PLAYING_SONG)  # Add current song back to the front of the queue_raw
+                    queue.insert(0, PLAYING_SONG)
+                        
+                    # Get album cover art for the selected track
+                    render_size, cover_art_path = get_cover_art(file_path, SIZE)
+
                     # CREATE AND START WAVE VISUALIZER
                     visualizer = WaveVisualizer(file_path, 
                                                 render_size[0], 
                                                 render_size[1])
+                    # Set wave color to contrast with album cover
+                    cover_art_path = os.path.join(os.path.dirname(__file__), "temp_cover_art/temp_cover.png")
+                    visualizer.set_color_from_image(cover_art_path)
                     visualizer.load_audio()
                     visualizer.play()
+
+            else:
+                # CREATE AND START WAVE VISUALIZER
+                visualizer = WaveVisualizer(file_path, 
+                                            render_size[0], 
+                                            render_size[1])
+                visualizer.load_audio()
+                visualizer.play()
         
 
     # ========================================================================
