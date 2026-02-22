@@ -25,20 +25,12 @@ class SongLengthBar:
             self.draw(self.total_length, self.current_length, self.screen_width, self.screen_height, screen)
 
     def draw(self, total_length, current_length, screen_width, screen_height, screen):
-        print(total_length)
         if total_length > 0:
             self.current_bar_width = int(current_length / total_length * int(640 * ((screen_width/1920 + screen_height/1147) / 2)))
             self.bar_width_hight = 640 * ((screen_width/1920 + screen_height/1147) / 2)
-
-            print( f"Calculated bar width: {self.current_bar_width} (current_length={current_length}, total_length={total_length}, screen_width={screen_width}, screen_height={screen_height}), bar_width_hight={self.bar_width_hight}" )
-            
-            print(screen)
-
-            print(int((screen_width-screen_width/5)/2+screen_width/5-total_length/2), int(screen_height/2+10+(self.bar_width_hight/2)), self.current_bar_width, 6)
 
             pygame.draw.rect(screen, (128, 128, 128), (int(((screen_width-screen_width/5)/2+screen_width/5)-self.bar_width_hight/2), int((screen_height/2+10+40*2)+self.bar_width_hight/2), self.bar_width_hight, 6))
             pygame.draw.rect(screen, (64, 255, 64), (int(((screen_width-screen_width/5)/2+screen_width/5)-self.bar_width_hight/2), int((screen_height/2+10+40*2)+self.bar_width_hight/2), self.current_bar_width, 6))
             Font = pygame.font.SysFont('Arial', 10)
             text_surface = Font.render(f"{int(current_length//60)}:{int(current_length%60):02d} / {int(total_length//60)}:{int(total_length%60):02d}", True, (255, 255, 255))
             screen.blit(text_surface, (int(((screen_width-screen_width/5)/2+screen_width/5)+self.bar_width_hight/2)+20, int((screen_height/2+10+40*2)+self.bar_width_hight/2)-4))
-            print(f"Drawing song length bar: current_length={current_length}, total_length={total_length}, bar_width={self.current_bar_width}")

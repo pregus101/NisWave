@@ -195,10 +195,6 @@ while True:
                     DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, folder_path = get_music_files_and_directories(og_folder, SCREEN_HEIGHT, og_folder, dir_scroll_offset, file_scroll_offset)
                     print("Error accessing directory contents for button interaction:", e)
 
-                # Debug output (can be removed later)
-                print(SCREEN_WIDTH/5-25 <= mouse_pos[0] <= SCREEN_WIDTH/5-5 and 5 <= mouse_pos[1] <= 25)
-                print(SCREEN_WIDTH/5-25, mouse_pos[0], SCREEN_WIDTH/5-5, mouse_pos[1])
-
                 # Check if back button was clicked (navigate to parent directory)
                 if SCREEN_WIDTH/5-40 <= mouse_pos[0] <= SCREEN_WIDTH/5-20 and 5 <= mouse_pos[1] <= 25:
                     folder_path = os.path.dirname(folder_path)
@@ -217,10 +213,6 @@ while True:
                             skip = False
                         except:
                             skip = True
-
-                            print(skip)
-
-                            print("Played songs dictionary:", played_songs)
                         
                         if not skip:
                             STARTED = True
@@ -286,7 +278,6 @@ while True:
                             queue = generated_unshuffled_queue(PLAYING_SONG, queue_raw)
                         else:
                             queue = shuffler(queue_raw, PLAYING_SONG)
-                            print(queue)
 
                     shuffle = not shuffle  # Toggle shuffle state
 
@@ -323,7 +314,6 @@ while True:
 
                         # Get metadata for the selected track
                         render_size, cover_art_path = get_cover_art(file_path, SIZE)
-                        print(get_artist(file_path))
 
                         # CREATE AND START WAVE VISUALIZER
                         visualizer = WaveVisualizer(file_path, 
@@ -406,8 +396,6 @@ while True:
                     skip = False
                 except:
                     skip = True
-
-                    print(skip)
                 
                 if not skip:
                     STARTED = True
@@ -596,9 +584,9 @@ while True:
     # Display currently playing song name
     try:
         text_surface = font.render("Now Playing: " + PLAYING_SONG, True, (255, 255, 255))
-        screen.blit(text_surface, ((SCREEN_WIDTH-song_select_window)/2+SCREEN_WIDTH/5-(13+len(PLAYING_SONG)*7), SCREEN_HEIGHT/2 + render_size[1]/2 + 10))
+        screen.blit(text_surface, ((SCREEN_WIDTH-song_select_window)/2+SCREEN_WIDTH/5-(13+len(PLAYING_SONG)*6), SCREEN_HEIGHT/2 + render_size[1]/2 + 10))
         text_surface = font.render("Artist: " + get_artist(os.path.join(currently_playing_folder_path, PLAYING_SONG)), True, (255, 255, 255))
-        screen.blit(text_surface, ((SCREEN_WIDTH-song_select_window)/2+SCREEN_WIDTH/5-(13+len(get_artist(os.path.join(currently_playing_folder_path, PLAYING_SONG)))*7), SCREEN_HEIGHT/2 + render_size[1]/2 + 50))
+        screen.blit(text_surface, ((SCREEN_WIDTH-song_select_window)/2+SCREEN_WIDTH/5-(13+len(get_artist(os.path.join(currently_playing_folder_path, PLAYING_SONG)))*6), SCREEN_HEIGHT/2 + render_size[1]/2 + 50))
     except:
         print("Error rendering now playing info")
 
