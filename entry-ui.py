@@ -235,11 +235,14 @@ while running:
                                                         render_size[0], 
                                                         render_size[1])
                             # Set wave color to contrast with album cover
-                            cover_art_path = os.path.join(os.path.dirname(__file__), "temp_cover_art/temp_cover.png")
                             visualizer.set_color_from_image(cover_art_path)
                             visualizer.load_audio()
                             visualizer.play()
                             visualizer_running = True
+
+                            # Load the sound file as a Sound object to get its length
+                            temp_sound_object = pygame.mixer.Sound(file_path)
+                            total_length = temp_sound_object.get_length() # Length in seconds
 
                     else:
                         # CREATE AND START WAVE VISUALIZER
@@ -455,9 +458,6 @@ while running:
             if os.path.isfile(file_path):
 
                 PLAYING_SONG = newsong
-
-                # queue_raw.remove(newsong)
-                # queue.remove(newsong)
 
                 # Get cover art and update visualizer for the new song
                 render_size, cover_art_path = get_cover_art(file_path, SIZE)
