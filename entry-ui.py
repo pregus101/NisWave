@@ -50,7 +50,9 @@ def listening():
     with Listener(on_press=on_press) as listener:
         listener.join()
 
-threading.Thread(target=listening).start()
+listener_thread = threading.Thread(target=listening)
+listener_thread.daemon = True  # Make it a daemon thread so it exits when main thread exits
+listener_thread.start()
 
 # Set up button rate limit (Because someone stalled my program by spamming the back button. Thanks [REDACTED] :D)
 last_button_press_time = 0
@@ -79,6 +81,8 @@ SCREEN_WIDTH = default_width
 SCREEN_HEIGHT = default_height
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE)
 pygame.display.set_caption("pregus101's NisWave app")
+
+running = True
 
 # =============================================================================
 # Application State Variables
@@ -129,7 +133,7 @@ previous_button_color = (64, 64, 64)  # Default gray for previous button
 # ============================================================================
 # MAIN APPLICATION LOOP
 # ============================================================================
-while True:
+while running:
     # Calculate album cover size based on screen resolution for scaling
     SIZE = int(640 * ((SCREEN_WIDTH/1920 + SCREEN_HEIGHT/1147) / 2))
     mouse_pos = pygame.mouse.get_pos()
@@ -141,6 +145,7 @@ while True:
         # Exit application when window is closed
         if event.type == pygame.QUIT:
             pygame.quit()
+            running = False
             sys.exit()
 
         if event.type == pygame.MOUSEMOTION:
@@ -276,8 +281,10 @@ while True:
                     if not PLAYING_SONG == '':
                         if shuffle:
                             queue = generated_unshuffled_queue(PLAYING_SONG, queue_raw)
+                            shuffle_button_color = (128, 128, 128)  # Change shuffle button color to indicate shuffle is off
                         else:
                             queue = shuffler(queue_raw, PLAYING_SONG)
+                            shuffle_button_color = (64, 255, 64)  # Change shuffle button color to indicate shuffle is on
 
                     shuffle = not shuffle  # Toggle shuffle state
 
@@ -583,7 +590,7 @@ while True:
     
     # Display currently playing song name
     try:
-        text_surface = font.render("Now Playing: " + PLAYING_SONG, True, (255, 255, 255))
+        text_surface = font.render("Now Playing: " + PLAYING_SONG[:-4], True, (255, 255, 255))
         screen.blit(text_surface, ((SCREEN_WIDTH-song_select_window)/2+SCREEN_WIDTH/5-(13+len(PLAYING_SONG)*6), SCREEN_HEIGHT/2 + render_size[1]/2 + 10))
         text_surface = font.render("Artist: " + get_artist(os.path.join(currently_playing_folder_path, PLAYING_SONG)), True, (255, 255, 255))
         screen.blit(text_surface, ((SCREEN_WIDTH-song_select_window)/2+SCREEN_WIDTH/5-(13+len(get_artist(os.path.join(currently_playing_folder_path, PLAYING_SONG)))*6), SCREEN_HEIGHT/2 + render_size[1]/2 + 50))
