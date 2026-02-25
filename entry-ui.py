@@ -139,8 +139,6 @@ while running:
     # Calculate album cover size based on screen resolution for scaling
     SIZE = int(640 * ((SCREEN_WIDTH/1920 + SCREEN_HEIGHT/1147) / 2))
     mouse_pos = pygame.mouse.get_pos()
-
-    print(current_time_sec)
     
     # ========================================================================
     # EVENT HANDLING
@@ -425,10 +423,10 @@ while running:
             pygame.mixer.music.stop()
 
         if input_key == Key.media_previous and STARTED:
-            if current_time_sec <= 10:
+            if current_time_sec != None and current_time_sec <= 10:
                 try:
-                    file_path = os.path.join(currently_playing_folder_path, played_songs[-1])
-                    skip = False
+                    file_path = os.path.join(currently_playing_folder_path, list(played_songs.keys())[-1])
+                    skip = False 
                 except:
                     skip = True
                 
@@ -438,20 +436,24 @@ while running:
 
                     queue_raw.insert(played_songs[PLAYING_SONG], PLAYING_SONG)  # Add current song back to the front of the queue_raw
                     queue.insert(0, PLAYING_SONG)
-                    played_songs.pop(PLAYING_SONG, None)  # Remove the song from played_songs dictionary
+                    played_songs.pop(PLAYING_SONG, None) # Remove the song from played_songs dictionary
                         
                     # Get album cover art for the selected track
                     render_size, cover_art_path = get_cover_art(file_path, SIZE)
 
-                    # CREATE AND START WAVE VISUALIZER   
+                    # CREATE AND START WAVE VISUALIZER
                     visualizer = WaveVisualizer(file_path, 
                                                 render_size[0], 
                                                 render_size[1])
                     # Set wave color to contrast with album cover
-                    cover_art_path = os.path.join(os.path.dirname(__file__), "temp_cover_art/temp_cover.png")
                     visualizer.set_color_from_image(cover_art_path)
                     visualizer.load_audio()
                     visualizer.play()
+                    visualizer_running = True
+
+                    # Load the sound file as a Sound object to get its length
+                    temp_sound_object = pygame.mixer.Sound(file_path)
+                    total_length = temp_sound_object.get_length() # Length in seconds
 
             else:
                 # CREATE AND START WAVE VISUALIZER
@@ -460,6 +462,7 @@ while running:
                                             render_size[1])
                 visualizer.load_audio()
                 visualizer.play()
+                visualizer_running = True
         
 
     # ========================================================================
