@@ -18,7 +18,7 @@ from get_metadata import get_artist
 from wave_renderer import WaveVisualizer 
 from queue_handler import shuffler
 from queue_handler import generated_unshuffled_queue
-from draw_song_length_bar import SongLengthBar
+from Song_Bar import SongBar
 import time
 
 # =============================================================================
@@ -50,9 +50,9 @@ def listening():
     with Listener(on_press=on_press) as listener:
         listener.join()
 
-listener_thread = threading.Thread(target=listening)
-listener_thread.daemon = True  # Make it a daemon thread so it exits when main thread exits
-listener_thread.start()
+# listener_thread = threading.Thread(target=listening)
+# listener_thread.daemon = True  # Make it a daemon thread so it exits when main thread exits
+# listener_thread.start()
 
 # Set up button rate limit (Because someone stalled my program by spamming the back button. Thanks [REDACTED] :D)
 last_button_press_time = 0
@@ -91,6 +91,8 @@ running = True
 OLD_SIZE = 640  # Previous album cover size (for resize detection)
 STARTED = False  # Track whether playback has begun
 PLAYING_SONG = ""  # Currently playing song filename
+
+is_dragging = False  # State variable to track if the user is currently dragging the song length bar
 
 current_time_ms = 0
 current_time_sec = current_time_ms / 1000.0
@@ -151,11 +153,17 @@ while running:
         if event.type == pygame.MOUSEMOTION:
             mouse_pos = event.pos  # Update mouse position on movement
 
+            if is_dragging:
+                if STARTED and visualizer_running:
+                    # Update the current time based on mouse position when dragging
+                    adjust = SongBar(total_length, current_time_sec, SCREEN_WIDTH, SCREEN_HEIGHT, screen)
+                    new_current_time = adjust.adjust_time(mouse_pos, total_length, SCREEN_WIDTH, SCREEN_HEIGHT, screen, visualizer)
+                    current_time_sec = new_current_time
+
             if shuffle:
                 shuffle_button_color = (64, 255, 64) if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-135+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-85+SCREEN_WIDTH/5 and SCREEN_HEIGHT-50 <= mouse_pos[1] <= SCREEN_HEIGHT-30 else (64, 128, 64)  # Change shuffle button color on hover
             else:
                 shuffle_button_color = (128, 128, 128) if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-135+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-85+SCREEN_WIDTH/5 and SCREEN_HEIGHT-50 <= mouse_pos[1] <= SCREEN_HEIGHT-30 else (64, 64, 64)  # Change shuffle button color on hover
-
 
             # change play/pause button color on hover
             if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-25+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+25+SCREEN_WIDTH/5 and SCREEN_HEIGHT-75 <= mouse_pos[1] <= SCREEN_HEIGHT-25:
@@ -192,6 +200,16 @@ while running:
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1 and time.time() - last_button_press_time > button_press_cooldown:  # Left mouse button only
                 last_button_press_time = time.time()
+
+                is_dragging = True  # Start dragging when mouse button is pressed down
+                
+                if is_dragging:
+                    if STARTED and visualizer_running:
+                        # Update the current time based on mouse position when dragging
+                        adjust = SongBar(total_length, current_time_sec, SCREEN_WIDTH, SCREEN_HEIGHT, screen)
+                        new_current_time = adjust.adjust_time(mouse_pos, total_length, SCREEN_WIDTH, SCREEN_HEIGHT, screen, visualizer)
+                        current_time_sec = new_current_time
+
                 # Get current directory contents for button interaction
                 
                 try:
@@ -334,6 +352,10 @@ while running:
                         visualizer.load_audio()
                         visualizer.play()
                         visualizer_running = True
+
+        if event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 1:
+                is_dragging = False  # Stop dragging when mouse button is released
 
         if event.type == pygame.MOUSEWHEEL:
             if mouse_pos[0] <= song_select_window:
@@ -492,9 +514,8 @@ while running:
     # ========================================================================
     # RENDERING & DISPLAY
     # ========================================================================
-
-    current_time_ms = pygame.mixer.music.get_pos()
-    current_time_sec = current_time_ms / 1000.0
+    if visualizer_running and visualizer:
+        current_time_sec = visualizer.get_position()  # Get current time from visualizer for more accurate tracking during seeking
     
     # Update screen dimensions in case window was resized
     SCREEN_WIDTH, SCREEN_HEIGHT = screen.get_size()
@@ -599,7 +620,7 @@ while running:
 
     # Draw/update the song length bar
     try:
-        song_length_bar = SongLengthBar(total_length, current_time_sec, SCREEN_WIDTH, SCREEN_HEIGHT, screen)
+        song_length_bar = SongBar(total_length, current_time_sec, SCREEN_WIDTH, SCREEN_HEIGHT, screen)
         song_length_bar.update(current_time_sec, total_length, SCREEN_WIDTH, SCREEN_HEIGHT, screen)
     except:
         pass

@@ -1,6 +1,7 @@
 import pygame
+from wave_renderer import WaveVisualizer
 
-class SongLengthBar:
+class SongBar:
     def __init__(self, total_length, current_length, screen_width, screen_height, screen):
         self.total_length = total_length
         self.current_length = current_length
@@ -34,3 +35,16 @@ class SongLengthBar:
             Font = pygame.font.SysFont('Arial', 10)
             text_surface = Font.render(f"{int(current_length//60)}:{int(current_length%60):02d} / {int(total_length//60)}:{int(total_length%60):02d}", True, (255, 255, 255))
             screen.blit(text_surface, (int(((screen_width-screen_width/5)/2+screen_width/5)+self.bar_width_hight/2)+20, int((screen_height/2+10+40*2)+self.bar_width_hight/2)-4))
+
+    def adjust_time(self, mouse_position, total_length, screen_width, screen_height, screen, visualizer=None):
+        self.bar_width_hight = 640 * ((screen_width/1920 + screen_height/1147) / 2)
+
+        # Calculate the new current_length based on mouse position
+        relative_x = mouse_position[0] - int(((screen_width-screen_width/5)/2+screen_width/5)-self.bar_width_hight/2)
+        relative_x = max(0, min(relative_x, self.bar_width_hight))  # Clamp to bar width
+        relative_y = mouse_position[1] - int((screen_height/2+10+40*2)+self.bar_width_hight/2)
+        if 0 <= relative_y <= 6:  # Only adjust if mouse is within the bar height
+            new_current_length = (relative_x / self.bar_width_hight) * total_length
+            if visualizer:
+                visualizer.set_position(new_current_length)
+            return new_current_length

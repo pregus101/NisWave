@@ -322,6 +322,51 @@ class WaveVisualizer:
                 elapsed_ms = pygame.time.get_ticks() - self.start_time
                 return elapsed_ms / 1000.0
     
+    def set_position(self, position_seconds):
+        """
+        Set the playback position to a specific time in seconds. Thread-safe.
+        
+        Args:
+            position_seconds (float): Target position in seconds
+        """
+        with self._instance_lock:
+            print(f"DEBUG: set_position called with {position_seconds:.2f}s, audio_duration={self.audio_duration:.2f}s")
+            
+            # Only clamp if audio is loaded
+            if self.audio_duration > 0:
+                clamped_position = max(0, min(position_seconds, self.audio_duration))
+                print(f"DEBUG: Audio loaded, clamped position to {clamped_position:.2f}s")
+            else:
+                # If audio not loaded, just use the position as-is
+                clamped_position = max(0, position_seconds)
+                print(f"DEBUG: Audio not loaded yet, using position {clamped_position:.2f}s as-is")
+            
+            # Update internal timing
+            if self.is_paused:
+                self.paused_elapsed_seconds = clamped_position
+                print(f"DEBUG: State=PAUSED, set paused_elapsed_seconds to {self.paused_elapsed_seconds:.2f}s")
+            else:
+                self.start_time = pygame.time.get_ticks() - (clamped_position * 1000)
+                print(f"DEBUG: State=PLAYING, adjusted start_time, next elapsed should be {clamped_position:.2f}s")
+            
+            # Try to set mixer position
+            try:
+                pygame.mixer.music.set_pos(clamped_position)
+                print(f"DEBUG: Mixer position set to {clamped_position:.2f}s")
+            except Exception as e:
+                print(f"DEBUG: Could not set mixer position: {type(e).__name__}: {e}")
+            
+            print(f"Set position to {clamped_position:.2f} seconds")
+    
+    def get_position(self):
+        """Get current playback position in seconds. Thread-safe."""
+        with self._instance_lock:
+            if self.is_paused:
+                return self.paused_elapsed_seconds
+            else:
+                elapsed_ms = pygame.time.get_ticks() - self.start_time
+                return elapsed_ms / 1000.0
+    
     def play(self):
         """Start playback. Thread-safe."""
         try:
