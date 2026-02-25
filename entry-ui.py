@@ -50,9 +50,9 @@ def listening():
     with Listener(on_press=on_press) as listener:
         listener.join()
 
-# listener_thread = threading.Thread(target=listening)
-# listener_thread.daemon = True  # Make it a daemon thread so it exits when main thread exits
-# listener_thread.start()
+listener_thread = threading.Thread(target=listening)
+listener_thread.daemon = True  # Make it a daemon thread so it exits when main thread exits
+listener_thread.start()
 
 # Set up button rate limit (Because someone stalled my program by spamming the back button. Thanks [REDACTED] :D)
 last_button_press_time = 0
@@ -139,6 +139,8 @@ while running:
     # Calculate album cover size based on screen resolution for scaling
     SIZE = int(640 * ((SCREEN_WIDTH/1920 + SCREEN_HEIGHT/1147) / 2))
     mouse_pos = pygame.mouse.get_pos()
+
+    print(current_time_sec)
     
     # ========================================================================
     # EVENT HANDLING
@@ -208,7 +210,6 @@ while running:
                         # Update the current time based on mouse position when dragging
                         adjust = SongBar(total_length, current_time_sec, SCREEN_WIDTH, SCREEN_HEIGHT, screen)
                         new_current_time = adjust.adjust_time(mouse_pos, total_length, SCREEN_WIDTH, SCREEN_HEIGHT, screen, visualizer)
-                        current_time_sec = new_current_time
 
                 # Get current directory contents for button interaction
                 
@@ -230,10 +231,10 @@ while running:
                 # Check if previous button was clicked
                 if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-80+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-30+SCREEN_WIDTH/5 and SCREEN_HEIGHT-50 <= mouse_pos[1] <= SCREEN_HEIGHT-30 and STARTED:
                     
-                    if current_time_sec <= 10:
+                    if current_time_sec != None and current_time_sec <= 10:
                         try:
                             file_path = os.path.join(currently_playing_folder_path, list(played_songs.keys())[-1])
-                            skip = False
+                            skip = False 
                         except:
                             skip = True
                         
@@ -342,6 +343,8 @@ while running:
 
                         # Get metadata for the selected track
                         render_size, cover_art_path = get_cover_art(file_path, SIZE)
+
+                        play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Change play/pause button to hover state when a new song is selected
 
                         # CREATE AND START WAVE VISUALIZER
                         visualizer = WaveVisualizer(file_path, 
@@ -508,9 +511,6 @@ while running:
                 pygame.mixer.music.stop()
                 retry = False
 
-    # ========================================================================
-    # RENDERING & DISPLAY
-    # ========================================================================
     # ========================================================================
     # RENDERING & DISPLAY
     # ========================================================================
