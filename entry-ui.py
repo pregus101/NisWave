@@ -20,6 +20,7 @@ from queue_handler import shuffler
 from queue_handler import generated_unshuffled_queue
 from Song_Bar import SongBar
 import time
+import random
 
 # =============================================================================
 # Screen Initialization
@@ -154,7 +155,7 @@ while running:
             mouse_pos = event.pos  # Update mouse position on movement
 
             if is_dragging:
-                if STARTED and visualizer_running:
+                if visualizer_running:
                     # Update the current time based on mouse position when dragging
                     adjust = SongBar(total_length, current_time_sec, SCREEN_WIDTH, SCREEN_HEIGHT, screen)
                     new_current_time = adjust.adjust_time(mouse_pos, total_length, SCREEN_WIDTH, SCREEN_HEIGHT, screen, visualizer)
@@ -204,7 +205,7 @@ while running:
                 is_dragging = True  # Start dragging when mouse button is pressed down
                 
                 if is_dragging:
-                    if STARTED and visualizer_running:
+                    if visualizer_running:
                         # Update the current time based on mouse position when dragging
                         adjust = SongBar(total_length, current_time_sec, SCREEN_WIDTH, SCREEN_HEIGHT, screen)
                         new_current_time = adjust.adjust_time(mouse_pos, total_length, SCREEN_WIDTH, SCREEN_HEIGHT, screen, visualizer)
@@ -223,16 +224,21 @@ while running:
                     print("Back button clicked, new folder path:", folder_path)
 
                 # Check if skip button was clicked
-                if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+30+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+80+SCREEN_WIDTH/5 and SCREEN_HEIGHT-50 <= mouse_pos[1] <= SCREEN_HEIGHT-30 and STARTED:
+                if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+30+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+80+SCREEN_WIDTH/5 and SCREEN_HEIGHT-50 <= mouse_pos[1] <= SCREEN_HEIGHT-30 and visualizer_running:
+                    STARTED = True
+                    play_pause = "play"
+                    play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Change play/pause button to playing state when a new song is selected
                     pygame.mixer.music.stop()
 
+
                 # Check if previous button was clicked
-                if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-80+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-30+SCREEN_WIDTH/5 and SCREEN_HEIGHT-50 <= mouse_pos[1] <= SCREEN_HEIGHT-30 and STARTED:
+                if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-80+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-30+SCREEN_WIDTH/5 and SCREEN_HEIGHT-50 <= mouse_pos[1] <= SCREEN_HEIGHT-30 and visualizer_running:
                     
                     if current_time_sec != None and current_time_sec <= 10:
                         try:
                             file_path = os.path.join(currently_playing_folder_path, list(played_songs.keys())[-1])
                             skip = False 
+                            play_pause = "play"
                         except:
                             skip = True
                         
@@ -260,6 +266,8 @@ while running:
                             # Load the sound file as a Sound object to get its length
                             temp_sound_object = pygame.mixer.Sound(file_path)
                             total_length = temp_sound_object.get_length() # Length in seconds
+                            play_pause = "play"  # Ensure play/pause state is set to "play" when previous button is clicked
+                            play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Change play/pause button to playing state when a new song is selected
 
                     else:
                         # CREATE AND START WAVE VISUALIZER
@@ -269,32 +277,75 @@ while running:
                         visualizer.load_audio()
                         visualizer.play()
                         visualizer_running = True
+                        play_pause = "play"  # Ensure play/pause state is set to "play" when previous button is clicked
+                        play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Change play/pause button to playing state when a new song is selected
 
                 # Check if pause/play button was clicked
                 if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-25+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+25+SCREEN_WIDTH/5 and SCREEN_HEIGHT-75 <= mouse_pos[1] <= SCREEN_HEIGHT-25:
-                    if play_pause == "play" and STARTED:
-                        STARTED = False
-                        play_pause = "pause"
-                        try:
-                            WaveVisualizer.set_pause_state(visualizer, True)  # Pause the visualizer
-                        except:
-                            pass  # Visualizer may not be initialized yet, ignore if error occurs
-                        play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play_hover.jpg")  # Default image for play button
-                    else:
-                        STARTED = True
-                        play_pause = "play"
-                        
-                        try:
-                            WaveVisualizer.set_pause_state(visualizer, False)  # Unpause the visualizer
-                        except:
-                            pass  # Visualizer may not be initialized yet, ignore if error occurs
+                    if visualizer_running:
+                        if play_pause == "play" and STARTED:
                             STARTED = False
-                            visualizer_running = False
-                            visualizer = None  # Reset visualizer instance when stopping playback
-
-                        if STARTED:
-                            play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause_hover.jpg")  # Default image for pause button
+                            play_pause = "pause"
+                            try:
+                                WaveVisualizer.set_pause_state(visualizer, True)  # Pause the visualizer
+                            except:
+                                pass  # Visualizer may not be initialized yet, ignore if error occurs
+                            play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play_hover.jpg")  # Default image for play button
+                        else:
+                            STARTED = True
+                            play_pause = "play"
                             
+                            try:
+                                WaveVisualizer.set_pause_state(visualizer, False)  # Unpause the visualizer
+                            except:
+                                pass  # Visualizer may not be initialized yet, ignore if error occurs
+                                STARTED = False
+                                visualizer_running = False
+                                visualizer = None  # Reset visualizer instance when stopping playback
+
+                            if STARTED:
+                                play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause_hover.jpg")  # Default image for pause button
+                    else:
+                        if FILES_ONLY:
+                            song_play = ""
+                            if shuffle:
+                                song_play = FILES_ONLY[random.randint(0, len(FILES_ONLY))]
+                                queue_raw = generated_unshuffled_queue(song_play, FILES_ONLY.copy())
+                                queue = shuffler(queue_raw, song_play, True)
+                            else:
+                                queue_raw = generated_unshuffled_queue(FILES_ONLY[0], FILES_ONLY.copy())
+                                queue = queue_raw.copy()
+                                song_play = FILES_ONLY[0]
+                            
+                            play_pause = "play"  # Reset play/pause state to "play" when a new song is selected
+                            played_songs = {}  # Clear the list of played songs when a new song is selected
+                            
+                            # Load and play the selected file
+                            file_path = os.path.join(folder_path, song_play)
+                            currently_playing_folder_path = folder_path  # Update the currently playing folder path
+                            STARTED = True
+                            # queue_raw.remove(button[1])
+                            # queue.remove(button[1])
+                            PLAYING_SONG = song_play
+
+                            # Load the sound file as a Sound object to get its length
+                            temp_sound_object = pygame.mixer.Sound(file_path)
+                            total_length = temp_sound_object.get_length() # Length in seconds
+
+                            # Get metadata for the selected track
+                            render_size, cover_art_path = get_cover_art(file_path, SIZE)
+
+                            play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Change play/pause button to hover state when a new song is selected
+
+                            # CREATE AND START WAVE VISUALIZER
+                            visualizer = WaveVisualizer(file_path, 
+                                                    render_size[0], 
+                                                    render_size[1])
+                            # Set wave color to contrast with album cover
+                            visualizer.set_color_from_image(cover_art_path)
+                            visualizer.load_audio()
+                            visualizer.play()
+                            visualizer_running = True
 
                 # Check if shuffle button was clicked
                 if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-135+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-85+SCREEN_WIDTH/5 and SCREEN_HEIGHT-50 <= mouse_pos[1] <= SCREEN_HEIGHT-30:
@@ -661,5 +712,3 @@ while running:
 
 pygame.quit()
 sys.exit()
-
-
