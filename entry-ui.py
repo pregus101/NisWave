@@ -379,52 +379,144 @@ while running:
         
         # Handle spacebar for pause/play
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE and visualizer:
+            if visualizer_running:
                 if play_pause == "play" and STARTED:
-                    pygame.mixer.music.pause()
                     STARTED = False
                     play_pause = "pause"
                     try:
                         WaveVisualizer.set_pause_state(visualizer, True)  # Pause the visualizer
                     except:
                         pass  # Visualizer may not be initialized yet, ignore if error occurs
-                    play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")  # Default image for play button
+                    play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play_hover.jpg")  # Default image for play button
                 else:
-                    pygame.mixer.music.unpause()
                     STARTED = True
                     play_pause = "play"
+                    
                     try:
                         WaveVisualizer.set_pause_state(visualizer, False)  # Unpause the visualizer
                     except:
                         pass  # Visualizer may not be initialized yet, ignore if error occurs
                         STARTED = False
-                    play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Default image for pause button
+                        visualizer_running = False
+                        visualizer = None  # Reset visualizer instance when stopping playback
+
+                    if STARTED:
+                        play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause_hover.jpg")  # Default image for pause button
+            else:
+                if FILES_ONLY:
+                    song_play = ""
+                    if shuffle:
+                        song_play = FILES_ONLY[random.randint(0, len(FILES_ONLY))]
+                        queue_raw = generated_unshuffled_queue(song_play, FILES_ONLY.copy())
+                        queue = shuffler(queue_raw, song_play, True)
+                    else:
+                        queue_raw = generated_unshuffled_queue(FILES_ONLY[0], FILES_ONLY.copy())
+                        queue = queue_raw.copy()
+                        song_play = FILES_ONLY[0]
+                    
+                    play_pause = "play"  # Reset play/pause state to "play" when a new song is selected
+                    played_songs = {}  # Clear the list of played songs when a new song is selected
+                    
+                    # Load and play the selected file
+                    file_path = os.path.join(folder_path, song_play)
+                    currently_playing_folder_path = folder_path  # Update the currently playing folder path
+                    STARTED = True
+                    # queue_raw.remove(button[1])
+                    # queue.remove(button[1])
+                    PLAYING_SONG = song_play
+
+                    # Load the sound file as a Sound object to get its length
+                    temp_sound_object = pygame.mixer.Sound(file_path)
+                    total_length = temp_sound_object.get_length() # Length in seconds
+
+                    # Get image for the selected track
+                    render_size, cover_art_path = get_cover_art(file_path, SIZE)
+                    album_cover_cache = pygame.image.load(cover_art_path)  # Update album cover cache with the new cover art when a song is selected
+
+                    play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Change play/pause button to hover state when a new song is selected
+
+                    # CREATE AND START WAVE VISUALIZER
+                    visualizer = WaveVisualizer(file_path, 
+                                            render_size[0], 
+                                            render_size[1])
+                    # Set wave color to contrast with album cover
+                    visualizer.set_color_from_image(cover_art_path)
+                    visualizer.load_audio()
+                    visualizer.play()
+                    visualizer_running = True
 
     with data_lock:
         input_key = media_input[0] if media_input else None
         media_input = media_input[1:]
 
     if input_key:
+
         if input_key == Key.media_play_pause and visualizer:
+            if visualizer_running:
                 if play_pause == "play" and STARTED:
-                    pygame.mixer.music.pause()
                     STARTED = False
                     play_pause = "pause"
                     try:
                         WaveVisualizer.set_pause_state(visualizer, True)  # Pause the visualizer
                     except:
                         pass  # Visualizer may not be initialized yet, ignore if error occurs
-                    play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")  # Default image for play button
+                    play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play_hover.jpg")  # Default image for play button
                 else:
-                    pygame.mixer.music.unpause()
                     STARTED = True
                     play_pause = "play"
+                    
                     try:
                         WaveVisualizer.set_pause_state(visualizer, False)  # Unpause the visualizer
                     except:
                         pass  # Visualizer may not be initialized yet, ignore if error occurs
                         STARTED = False
-                    play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Default image for pause button
+                        visualizer_running = False
+                        visualizer = None  # Reset visualizer instance when stopping playback
+
+                    if STARTED:
+                        play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause_hover.jpg")  # Default image for pause button
+            else:
+                if FILES_ONLY:
+                    song_play = ""
+                    if shuffle:
+                        song_play = FILES_ONLY[random.randint(0, len(FILES_ONLY))]
+                        queue_raw = generated_unshuffled_queue(song_play, FILES_ONLY.copy())
+                        queue = shuffler(queue_raw, song_play, True)
+                    else:
+                        queue_raw = generated_unshuffled_queue(FILES_ONLY[0], FILES_ONLY.copy())
+                        queue = queue_raw.copy()
+                        song_play = FILES_ONLY[0]
+                    
+                    play_pause = "play"  # Reset play/pause state to "play" when a new song is selected
+                    played_songs = {}  # Clear the list of played songs when a new song is selected
+                    
+                    # Load and play the selected file
+                    file_path = os.path.join(folder_path, song_play)
+                    currently_playing_folder_path = folder_path  # Update the currently playing folder path
+                    STARTED = True
+                    # queue_raw.remove(button[1])
+                    # queue.remove(button[1])
+                    PLAYING_SONG = song_play
+
+                    # Load the sound file as a Sound object to get its length
+                    temp_sound_object = pygame.mixer.Sound(file_path)
+                    total_length = temp_sound_object.get_length() # Length in seconds
+
+                    # Get image for the selected track
+                    render_size, cover_art_path = get_cover_art(file_path, SIZE)
+                    album_cover_cache = pygame.image.load(cover_art_path)  # Update album cover cache with the new cover art when a song is selected
+
+                    play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Change play/pause button to hover state when a new song is selected
+
+                    # CREATE AND START WAVE VISUALIZER
+                    visualizer = WaveVisualizer(file_path, 
+                                            render_size[0], 
+                                            render_size[1])
+                    # Set wave color to contrast with album cover
+                    visualizer.set_color_from_image(cover_art_path)
+                    visualizer.load_audio()
+                    visualizer.play()
+                    visualizer_running = True
 
         if input_key == Key.media_next and visualizer_running:
             STARTED, play_pause, play_pause_button_path = skip()
