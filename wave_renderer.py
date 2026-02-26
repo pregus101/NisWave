@@ -38,8 +38,8 @@ device_OS = platform.system()
 
 # --- CONFIGURATION ---
 CHANNELS = 2
-RATE = 96000
-BLOCKSIZE = 4096  # Larger window for smoother FFT
+RATE = 44100  # Reduced from 96000 for significant CPU savings (still high quality)
+BLOCKSIZE = 2048  # Reduced from 4096 (less data to process per frame)
 DURATION = 0.04
 SMOOTHING_FACTOR = 0.85  # Higher = smoother, closer to 1 means slower response
 DECAY_RATE = 0.95  # How quickly bars fall (closer to 1 = slower fall)

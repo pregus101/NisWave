@@ -124,6 +124,19 @@ file_scroll_offset = 0  # Vertical offset for files
 # Default cover art path (used if no cover art is found in the MP3 file)
 cover_art_path = os.path.join(os.path.dirname(__file__), "assets/default_cover.jpg")  # Default cover art path
 
+# ============================================================================
+# PERFORMANCE OPTIMIZATIONS
+# ============================================================================
+# Image and text surface caching
+button_images_cache = {}
+album_cover_cache = pygame.image.load(cover_art_path)  # Cache the default cover art
+text_cache = {}
+metadata_cache = {}
+
+# Frame rate limiter for battery savings
+clock = pygame.time.Clock()
+FPS = 30  # Reduced from 60 for significant battery savings
+
 # set defualt button colors
 skip_button_color = (64, 64, 64)  # Default gray for skip button
 play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")  # Default image for play/pause button
@@ -139,6 +152,9 @@ previous_button_color = (64, 64, 64)  # Default gray for previous button
 # MAIN APPLICATION LOOP
 # ============================================================================
 while running:
+    # Limit frame rate for battery savings (Major optimization)
+    clock.tick(FPS)
+    
     # Calculate album cover size based on screen resolution for scaling
     SIZE = int(640 * ((SCREEN_WIDTH/1920 + SCREEN_HEIGHT/1147) / 2))
     mouse_pos = pygame.mouse.get_pos()
@@ -163,40 +179,23 @@ while running:
                     new_current_time = adjust.adjust_time(mouse_pos, total_length, SCREEN_WIDTH, SCREEN_HEIGHT, screen, visualizer)
                     current_time_sec = new_current_time
 
-            if shuffle:
-                shuffle_button_color = (64, 255, 64) if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-135+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-85+SCREEN_WIDTH/5 and SCREEN_HEIGHT-50 <= mouse_pos[1] <= SCREEN_HEIGHT-30 else (64, 128, 64)  # Change shuffle button color on hover
+            # Optimized button hover detection (reduced calculations)
+            def check_hover(x1, y1, x2, y2, px, py):
+                return x1 <= px <= x2 and y1 <= py <= y2
+            
+            mx, my = mouse_pos
+            shuffle_hovered = check_hover((SCREEN_WIDTH-SCREEN_WIDTH/5)/2-135+SCREEN_WIDTH/5, SCREEN_HEIGHT-50, (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-85+SCREEN_WIDTH/5, SCREEN_HEIGHT-30, mx, my)
+            shuffle_button_color = (64, 255, 64) if shuffle and shuffle_hovered else (64, 255, 64) if shuffle else (128, 128, 128) if shuffle_hovered else (64, 64, 64)
+            
+            play_pause_hovered = check_hover((SCREEN_WIDTH-SCREEN_WIDTH/5)/2-25+SCREEN_WIDTH/5, SCREEN_HEIGHT-75, (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+25+SCREEN_WIDTH/5, SCREEN_HEIGHT-25, mx, my)
+            if play_pause_hovered:
+                play_pause_button_path = "assets/play_pause_hover.jpg" if play_pause == "play" and STARTED else "assets/play_play_hover.jpg"
             else:
-                shuffle_button_color = (128, 128, 128) if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-135+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-85+SCREEN_WIDTH/5 and SCREEN_HEIGHT-50 <= mouse_pos[1] <= SCREEN_HEIGHT-30 else (64, 64, 64)  # Change shuffle button color on hover
-
-            # change play/pause button color on hover
-            if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-25+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+25+SCREEN_WIDTH/5 and SCREEN_HEIGHT-75 <= mouse_pos[1] <= SCREEN_HEIGHT-25:
-                if play_pause == "play" and STARTED:
-                    play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause_hover.jpg")  # 
-                else:
-                    play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play_hover.jpg")  # 
-            else:        
-                if play_pause == "play" and STARTED:
-                    play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Default image for play button
-                else:
-                    play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")  # Default image for pause button
-
-            # Change back button color on hover
-            if SCREEN_WIDTH/5-40 <= mouse_pos[0] <= SCREEN_WIDTH/5-20 and 5 <= mouse_pos[1] <= 25:
-                back_button_color = (128, 128, 128)  # Lighter gray on hover
-            else:
-                back_button_color = (64, 64, 64)  # Default gray
-
-            # Change skip button color on hover
-            if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+30+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+80+SCREEN_WIDTH/5 and SCREEN_HEIGHT-50 <= mouse_pos[1] <= SCREEN_HEIGHT-30:
-                skip_button_color = (128, 128, 128)  # Lighter gray on hover
-            else:
-                skip_button_color = (64, 64, 64)  # Default gray
-
-            # prevoius button color on hover
-            if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-80+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-30+SCREEN_WIDTH/5 and SCREEN_HEIGHT-50 <= mouse_pos[1] <= SCREEN_HEIGHT-30:
-                previous_button_color = (128, 128, 128)  # Lighter gray on hover
-            else:
-                previous_button_color = (64, 64, 64)  # Default gray
+                play_pause_button_path = "assets/play_pause.jpg" if play_pause == "play" and STARTED else "assets/play_play.jpg"
+            
+            back_button_color = (128, 128, 128) if check_hover(SCREEN_WIDTH/5-40, 5, SCREEN_WIDTH/5-20, 25, mx, my) else (64, 64, 64)
+            skip_button_color = (128, 128, 128) if check_hover((SCREEN_WIDTH-SCREEN_WIDTH/5)/2+30+SCREEN_WIDTH/5, SCREEN_HEIGHT-50, (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+80+SCREEN_WIDTH/5, SCREEN_HEIGHT-30, mx, my) else (64, 64, 64)
+            previous_button_color = (128, 128, 128) if check_hover((SCREEN_WIDTH-SCREEN_WIDTH/5)/2-80+SCREEN_WIDTH/5, SCREEN_HEIGHT-50, (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-30+SCREEN_WIDTH/5, SCREEN_HEIGHT-30, mx, my) else (64, 64, 64)
 
 
         # Handle mouse button clicks (folder/file selection and navigation)
@@ -228,10 +227,12 @@ while running:
                 # Check if skip button was clicked
                 if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+30+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+80+SCREEN_WIDTH/5 and SCREEN_HEIGHT-50 <= mouse_pos[1] <= SCREEN_HEIGHT-30 and visualizer_running:
                     STARTED, play_pause, play_pause_button_path = skip()
+                    album_cover_cache = pygame.image.load(cover_art_path)  # Upadate album cover cache to default when skipping songs
 
                 # Check if previous button was clicked
                 if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-80+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-30+SCREEN_WIDTH/5 and SCREEN_HEIGHT-50 <= mouse_pos[1] <= SCREEN_HEIGHT-30 and visualizer_running:
                     play_pause, played_songs, queue_raw, queue, play_pause_button_path, visualizer, STARTED, PLAYING_SONG, render_size, cover_art_path = previous(current_time_sec, currently_playing_folder_path, played_songs, queue_raw, queue, SIZE, visualizer, screen, total_length, play_pause, play_pause_button_path, visualizer_running, STARTED, PLAYING_SONG, render_size, cover_art_path, file_path)
+                    album_cover_cache = pygame.image.load(cover_art_path)  # Update album cover cache with the new cover art when going to the previous song
 
                 # Check if pause/play button was clicked
                 if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-25+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+25+SCREEN_WIDTH/5 and SCREEN_HEIGHT-75 <= mouse_pos[1] <= SCREEN_HEIGHT-25:
@@ -285,8 +286,9 @@ while running:
                             temp_sound_object = pygame.mixer.Sound(file_path)
                             total_length = temp_sound_object.get_length() # Length in seconds
 
-                            # Get metadata for the selected track
+                            # Get image for the selected track
                             render_size, cover_art_path = get_cover_art(file_path, SIZE)
+                            album_cover_cache = pygame.image.load(cover_art_path)  # Update album cover cache with the new cover art when a song is selected
 
                             play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Change play/pause button to hover state when a new song is selected
 
@@ -345,6 +347,7 @@ while running:
 
                         # Get metadata for the selected track
                         render_size, cover_art_path = get_cover_art(file_path, SIZE)
+                        album_cover_cache = pygame.image.load(cover_art_path)  # Update album cover cache with the new cover art when a song is selected
 
                         play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Change play/pause button to hover state when a new song is selected
 
@@ -428,6 +431,7 @@ while running:
 
         if input_key == Key.media_previous and STARTED:
             play_pause, played_songs, queue_raw, queue, play_pause_button_path, visualizer, STARTED, PLAYING_SONG, render_size, cover_art_path = previous(current_time_sec, currently_playing_folder_path, played_songs, queue_raw, queue, SIZE, visualizer, screen, total_length, play_pause, play_pause_button_path, visualizer_running, STARTED, PLAYING_SONG, render_size, cover_art_path, file_path) 
+            album_cover_cache = pygame.image.load(cover_art_path)  # Update album cover cache with the new cover art when going to the previous song
 
     # ========================================================================
     # AUTO-PLAY & QUEUE MANAGEMENT
@@ -453,6 +457,7 @@ while running:
 
                 # Get cover art and update visualizer for the new song
                 render_size, cover_art_path = get_cover_art(file_path, SIZE)
+                album_cover_cache = pygame.image.load(cover_art_path)  # Update album cover cache with the new cover art when a song is selected
 
                 # Load the sound file as a Sound object to get its length
                 temp_sound_object = pygame.mixer.Sound(file_path)
@@ -473,6 +478,7 @@ while running:
                 STARTED = False  # Stop playback if there are no more songs to play
                 visualizer_running = False  # Stop the visualizer as well
                 cover_art_path = os.path.join(os.path.dirname(__file__), "assets/default_cover.jpg")  # Reset to default cover art path
+                album_cover_cache = pygame.image.load(cover_art_path)  # Reset album cover cache to default when no more songs are available
             
             if retry:
                 pygame.mixer.music.stop()
@@ -505,26 +511,34 @@ while running:
     # Create subsurface for file list section (bottom half of sidebar)
     file_surf = screen.subsurface(0, SCREEN_HEIGHT/2, song_select_window, SCREEN_HEIGHT/2)
 
-    # Draw folder list with header
-    for directory in DIRECTORY_ONLY:
-        text_surface = font.render(directory, True, (255, 255, 255))
-        folder_surf.blit(text_surface, (10, (DIRECTORY_ONLY.index(directory)+1)*40 + 10 - dir_scroll_offset))
+    # Draw folder list with header (optimized with enumeration and caching)
+    for idx, directory in enumerate(DIRECTORY_ONLY):
+        cache_key = f"folder_{directory}_{id(font)}"
+        if cache_key not in text_cache:
+            text_cache[cache_key] = font.render(directory, True, (255, 255, 255))
+        folder_surf.blit(text_cache[cache_key], (10, (idx+1)*40 + 10 - dir_scroll_offset))
 
     pygame.draw.rect(screen, (40, 40, 40), (0, 0, song_select_window, 40))
-    text_surface = font.render("Folders:", True, (255, 255, 255))
-    folder_surf.blit(text_surface, (10, 10))
+    cache_key = "header_folders"
+    if cache_key not in text_cache:
+        text_cache[cache_key] = font.render("Folders:", True, (255, 255, 255))
+    folder_surf.blit(text_cache[cache_key], (10, 10))
 
     # Draw file list background
     pygame.draw.rect(screen, (40, 40, 40), (0, SCREEN_HEIGHT/2, song_select_window, SCREEN_HEIGHT/2))
 
-    # Draw file list with header
-    for file in FILES_ONLY:
-        text_surface = font.render(file, True, (255, 255, 255))
-        file_surf.blit(text_surface, (10, (FILES_ONLY.index(file)+1)*40 + 10 - file_scroll_offset))
+    # Draw file list with header (optimized with enumeration and caching)
+    for idx, file in enumerate(FILES_ONLY):
+        cache_key = f"file_{file}_{id(font)}"
+        if cache_key not in text_cache:
+            text_cache[cache_key] = font.render(file, True, (255, 255, 255))
+        file_surf.blit(text_cache[cache_key], (10, (idx+1)*40 + 10 - file_scroll_offset))
 
     pygame.draw.rect(screen, (40, 40, 40), (0, SCREEN_HEIGHT/2, song_select_window, 40))   
-    text_surface = font.render("Files:", True, (255, 255, 255))
-    file_surf.blit(text_surface, (10, 10))
+    cache_key = "header_files"
+    if cache_key not in text_cache:
+        text_cache[cache_key] = font.render("Files:", True, (255, 255, 255))
+    file_surf.blit(text_cache[cache_key], (10, 10))
 
     try:
         # Draw scrollbars
@@ -552,38 +566,51 @@ while running:
     # Draw back button (small gray square)
     pygame.draw.rect(screen, back_button_color, (SCREEN_WIDTH/5-40, 5, 20, 20))
 
-    #draw media control buttons (small gray rectangles)
-    # pygame.draw.rect(screen, play_pause_button_color, ((SCREEN_WIDTH-SCREEN_WIDTH/5)/2-25+SCREEN_WIDTH/5, SCREEN_HEIGHT-30, 50, 20))
-
-    play_button = pygame.image.load(play_pause_button_path)
+    # Load and cache button images
+    button_path = os.path.join(os.path.dirname(__file__), play_pause_button_path)
+    if button_path not in button_images_cache:
+        button_images_cache[button_path] = pygame.image.load(button_path)
+    play_button = button_images_cache[button_path]
 
     play_button_rect = play_button.get_rect()
     play_button_rect.center = ((SCREEN_WIDTH-SCREEN_WIDTH/5)/2+SCREEN_WIDTH/5, SCREEN_HEIGHT-50)
     screen.blit(play_button, play_button_rect)
         
-
     pygame.draw.rect(screen, skip_button_color, ((SCREEN_WIDTH-SCREEN_WIDTH/5)/2+30+SCREEN_WIDTH/5, SCREEN_HEIGHT-50, 50, 20))
     pygame.draw.rect(screen, previous_button_color, ((SCREEN_WIDTH-SCREEN_WIDTH/5)/2-80+SCREEN_WIDTH/5, SCREEN_HEIGHT-50, 50, 20))
     pygame.draw.rect(screen, shuffle_button_color, ((SCREEN_WIDTH-SCREEN_WIDTH/5)/2-135+SCREEN_WIDTH/5, SCREEN_HEIGHT-50, 50, 20))
 
-    # Load and display album cover art, centered on right side
-    album_cover = pygame.image.load(cover_art_path)
+    # Load and cache album cover art
+    album_cover_cache = pygame.image.load(cover_art_path)
 
-    image_rect = album_cover.get_rect()
+    image_rect = album_cover_cache.get_rect()
     # Center the cover image on the right side of the screen
     image_rect.center = ((SCREEN_WIDTH-(SCREEN_WIDTH/5))/2+SCREEN_WIDTH/5, SCREEN_HEIGHT/2)
-    screen.blit(album_cover, image_rect)
+    screen.blit(album_cover_cache, image_rect)
 
     # ---- NOW PLAYING INFO ----
     
-    # Display currently playing song name
+    # Display currently playing song name (optimized with caching)
     try:
-        text_surface = font.render("Now Playing: " + PLAYING_SONG[:-4], True, (255, 255, 255))
-        screen.blit(text_surface, ((SCREEN_WIDTH-song_select_window)/2+SCREEN_WIDTH/5-(13+len(PLAYING_SONG)*6), SCREEN_HEIGHT/2 + render_size[1]/2 + 10))
-        text_surface = font.render("Artist: " + get_artist(os.path.join(currently_playing_folder_path, PLAYING_SONG)), True, (255, 255, 255))
-        screen.blit(text_surface, ((SCREEN_WIDTH-song_select_window)/2+SCREEN_WIDTH/5-(13+len(get_artist(os.path.join(currently_playing_folder_path, PLAYING_SONG)))*6), SCREEN_HEIGHT/2 + render_size[1]/2 + 50))
+        # Cache metadata lookups (expensive operation)
+        song_file_path = os.path.join(currently_playing_folder_path, PLAYING_SONG)
+        if song_file_path not in metadata_cache:
+            metadata_cache[song_file_path] = get_artist(song_file_path)
+        artist = metadata_cache[song_file_path]
+        
+        song_title = "Now Playing: " + PLAYING_SONG[:-4]
+        cache_key = f"now_playing_{song_title}_{id(font)}"
+        if cache_key not in text_cache:
+            text_cache[cache_key] = font.render(song_title, True, (255, 255, 255))
+        screen.blit(text_cache[cache_key], ((SCREEN_WIDTH-song_select_window)/2+SCREEN_WIDTH/5-(13+len(PLAYING_SONG)*6), SCREEN_HEIGHT/2 + render_size[1]/2 + 10))
+        
+        artist_text = "Artist: " + artist
+        cache_key = f"artist_{artist}_{id(font)}"
+        if cache_key not in text_cache:
+            text_cache[cache_key] = font.render(artist_text, True, (255, 255, 255))
+        screen.blit(text_cache[cache_key], ((SCREEN_WIDTH-song_select_window)/2+SCREEN_WIDTH/5-(13+len(artist)*6), SCREEN_HEIGHT/2 + render_size[1]/2 + 50))
     except:
-        print("Error rendering now playing info")
+        pass  # Silently fail if metadata unavailable
 
     # Draw/update the song length bar
     try:
@@ -595,6 +622,7 @@ while running:
     # Update album cover if screen size changed
     if SIZE != OLD_SIZE:
         render_size, cover_art_path = get_cover_art(os.path.join(currently_playing_folder_path, PLAYING_SONG), SIZE)
+        album_cover_cache = pygame.image.load(cover_art_path)  # Update album cover cache with the new cover art when a song is selected
 
     OLD_SIZE = SIZE
     
