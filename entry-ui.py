@@ -185,7 +185,7 @@ while running:
             
             mx, my = mouse_pos
             shuffle_hovered = check_hover((SCREEN_WIDTH-SCREEN_WIDTH/5)/2-135+SCREEN_WIDTH/5, SCREEN_HEIGHT-50, (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-85+SCREEN_WIDTH/5, SCREEN_HEIGHT-30, mx, my)
-            shuffle_button_color = (64, 255, 64) if shuffle and shuffle_hovered else (64, 255, 64) if shuffle else (128, 128, 128) if shuffle_hovered else (64, 64, 64)
+            shuffle_button_color = (64, 255, 64) if shuffle and shuffle_hovered else (64, 128, 64) if shuffle else (128, 128, 128) if shuffle_hovered else (64, 64, 64)
             
             play_pause_hovered = check_hover((SCREEN_WIDTH-SCREEN_WIDTH/5)/2-25+SCREEN_WIDTH/5, SCREEN_HEIGHT-75, (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+25+SCREEN_WIDTH/5, SCREEN_HEIGHT-25, mx, my)
             if play_pause_hovered:
