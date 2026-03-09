@@ -1,0 +1,11 @@
+.DS_Store
+__pycache__/draw_song_length_bar.cpython-313.pyc
+__pycache__/get_files.cpython-313.pyc
+__pycache__/get_metadata.cpython-313.pyc
+__pycache__/input_handler.cpython-313.pyc
+__pycache__/queue_handler.cpython-313.pyc
+__pycache__/Song_Bar.cpython-313.pyc
+__pycache__/wave_renderer.cpython-313.pyc
+assets/default_cover.jpg
+assets/default_cover.jpg
+temp_cover_art/temp_cover.png
