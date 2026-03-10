@@ -86,6 +86,8 @@ SCREEN_HEIGHT = default_height
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE)
 pygame.display.set_caption("pregus101's NisWave app")
 
+song_select_window = SCREEN_WIDTH / 5
+
 running = True
 
 # =============================================================================
@@ -220,6 +222,7 @@ while running:
                 is_dragging = True  # Start dragging when mouse button is pressed down
                 
                 if is_dragging:
+                    volume.adjust_volume(mouse_pos)
                     if visualizer_running:
                         # Update the current time based on mouse position when dragging
                         new_current_time = song_length_bar.adjust_time(mouse_pos)
