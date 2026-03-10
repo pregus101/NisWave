@@ -21,6 +21,7 @@ from queue_handler import generated_unshuffled_queue
 from Song_Bar import SongBar
 from input_handler import previous
 from input_handler import skip
+from volume_worker import volume_manager
 import time
 import random
 
@@ -150,6 +151,8 @@ previous_button_color = (64, 64, 64)  # Default gray for previous button
 # DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons = get_music_files_and_directories(folder_path, SCREEN_HEIGHT)
 # queue = FILES_ONLY.copy()  # Initialize queue with available songs in the current directory
 
+volume = volume_manager(screen, SCREEN_WIDTH, SCREEN_HEIGHT)
+
 # ============================================================================
 # MAIN APPLICATION LOOP
 # ============================================================================
@@ -171,6 +174,14 @@ while running:
             running = False
             sys.exit()
 
+        if event.type == pygame.WINDOWRESIZED:
+            # Update screen dimensions in case window was resized
+            SCREEN_WIDTH, SCREEN_HEIGHT = screen.get_size()
+            song_select_window = SCREEN_WIDTH / 5
+            volume.resize(SCREEN_WIDTH, SCREEN_HEIGHT)
+            if song_length_bar:
+                song_length_bar.resize(SCREEN_WIDTH, SCREEN_HEIGHT)
+
         if event.type == pygame.MOUSEMOTION:
             mouse_pos = event.pos  # Update mouse position on movement
 
@@ -179,6 +190,8 @@ while running:
                     # Update the current time based on mouse position when dragging
                     new_current_time = song_length_bar.adjust_time(mouse_pos)
                     current_time_sec = new_current_time
+
+                volume.adjust_volume(mouse_pos)
 
             # Optimized button hover detection (reduced calculations)
             def check_hover(x1, y1, x2, y2, px, py):
@@ -231,8 +244,9 @@ while running:
 
                 # Check if previous button was clicked
                 if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-80+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-30+SCREEN_WIDTH/5 and SCREEN_HEIGHT-50 <= mouse_pos[1] <= SCREEN_HEIGHT-30 and visualizer_running:
-                    play_pause, played_songs, queue_raw, queue, play_pause_button_path, visualizer, STARTED, PLAYING_SONG, render_size, cover_art_path = previous(current_time_sec, currently_playing_folder_path, played_songs, queue_raw, queue, SIZE, visualizer, screen, total_length, play_pause, play_pause_button_path, visualizer_running, STARTED, PLAYING_SONG, render_size, cover_art_path, file_path)
+                    play_pause, played_songs, queue_raw, queue, play_pause_button_path, visualizer, STARTED, PLAYING_SONG, render_size, cover_art_path, total_length, visualizer_running = previous(current_time_sec, currently_playing_folder_path, played_songs, queue_raw, queue, SIZE, visualizer, screen, total_length, play_pause, play_pause_button_path, visualizer_running, STARTED, PLAYING_SONG, render_size, cover_art_path, file_path)
                     album_cover = pygame.image.load(cover_art_path)  # Update album cover cache with the new cover art when going to the previous song
+                    song_length_bar = SongBar(total_length, current_time_sec, SCREEN_WIDTH, SCREEN_HEIGHT, screen, visualizer)
 
                 # Check if pause/play button was clicked
                 if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-25+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+25+SCREEN_WIDTH/5 and SCREEN_HEIGHT-75 <= mouse_pos[1] <= SCREEN_HEIGHT-25:
@@ -577,6 +591,9 @@ while running:
 
                 song_length_bar = SongBar(total_length, current_time_sec, SCREEN_WIDTH, SCREEN_HEIGHT, screen, visualizer)
 
+                # Load and cache album cover art
+                album_cover = pygame.image.load(cover_art_path)
+
 
             else:
                 print("No more songs in the queue to play.")
@@ -594,10 +611,6 @@ while running:
     # ========================================================================
     if visualizer_running and visualizer:
         current_time_sec = visualizer.get_position()  # Get current time from visualizer for more accurate tracking during seeking
-    
-    # Update screen dimensions in case window was resized
-    SCREEN_WIDTH, SCREEN_HEIGHT = screen.get_size()
-    song_select_window = SCREEN_WIDTH / 5
     
     # ---- LEFT SIDEBAR: Directory and File Selection ----
     
@@ -685,9 +698,6 @@ while running:
     pygame.draw.rect(screen, previous_button_color, ((SCREEN_WIDTH-SCREEN_WIDTH/5)/2-80+SCREEN_WIDTH/5, SCREEN_HEIGHT-50, 50, 20))
     pygame.draw.rect(screen, shuffle_button_color, ((SCREEN_WIDTH-SCREEN_WIDTH/5)/2-135+SCREEN_WIDTH/5, SCREEN_HEIGHT-50, 50, 20))
 
-    # Load and cache album cover art
-    album_cover = pygame.image.load(cover_art_path)
-
     image_rect = album_cover.get_rect()
     # Center the cover image on the right side of the screen
     image_rect.center = ((SCREEN_WIDTH-(SCREEN_WIDTH/5))/2+SCREEN_WIDTH/5, SCREEN_HEIGHT/2)
@@ -729,6 +739,10 @@ while running:
         album_cover = pygame.image.load(cover_art_path)  # Update album cover cache with the new cover art when a song is selected
 
     OLD_SIZE = SIZE
+
+    # Volume renderer
+
+    volume.draw()
     
     # ---- WAVE VISUALIZATION RENDERING ----
     
