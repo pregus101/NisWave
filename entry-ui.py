@@ -56,7 +56,7 @@ def listening():
 
 listener_thread = threading.Thread(target=listening)
 listener_thread.daemon = True  # Make it a daemon thread so it exits when main thread exits
-listener_thread.start()
+# listener_thread.start()
 
 # Set up button rate limit (Because someone stalled my program by spamming the back button. Thanks [REDACTED] :D)
 last_button_press_time = 0
@@ -94,7 +94,7 @@ running = True
 # Application State Variables
 # =============================================================================
 
-OLD_SIZE = 640  # Previous album cover size (for resize detection)
+OLD_SIZE = 640  # Previ ous album cover size (for resize detection)
 STARTED = False  # Track whether playback has begun
 PLAYING_SONG = ""  # Currently playing song filename
 
