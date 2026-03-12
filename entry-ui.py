@@ -314,6 +314,7 @@ while running:
                             total_length = temp_sound_object.get_length() # Length in seconds
 
                             # Get image for the selected track
+                            album_handler.update_size()
                             render_size, cover_art_path = album_handler.update_image(file_path)
                             album_cover = pygame.image.load(cover_art_path)  # Update album cover cache with the new cover art when a song is selected
 
@@ -375,6 +376,7 @@ while running:
                         total_length = temp_sound_object.get_length() # Length in seconds
 
                         # Get metadata for the selected track
+                        album_handler.update_size()
                         render_size, cover_art_path = album_handler.update_image(file_path)
                         album_cover = pygame.image.load(cover_art_path)  # Update album cover cache with the new cover art when a song is selected
 
