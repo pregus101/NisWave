@@ -26,9 +26,11 @@ class volume_manager:
 
         # Calculate the new volume based on mouse position
         relative_x = mouse_position[0] - (self.screen_width-(self.screen_width/5))
-        relative_x = max(0, min(relative_x, self.bar_width_hight))  # Clamp to bar width
+        relative_x = max(-1, min(relative_x, self.bar_width_hight+2))  # Clamp to bar width
         relative_y = mouse_position[1] - ((self.screen_height-(self.bar_width_hight/19)*2))
-        if 0 <= relative_y <= 6:  # Only adjust if mouse is within the bar heightf
+
+
+        if 0 <= relative_y <= 6 and 0 <= relative_x <= self.bar_width_hight+1:  # Only adjust if mouse is within the bar heightf
             self.current_volume = (relative_x / self.bar_width_hight) * self.max_volume
             pygame.mixer_music.set_volume(self.current_volume)
         self.draw()

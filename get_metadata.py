@@ -59,7 +59,7 @@ class image_get:
                             print(f"Unsupported image mime type: {tag.mime}")
                             continue
                         
-                        track_title = file.get('TIT2', ['temp'])[0]
+                        track_title = os.path.basename(file_path)[:-4]
                         return_path = os.path.join(os.path.dirname(__file__), f"main_cover_art/{track_title.replace('/', '_')}_{self.typeOf}.{ext}")
 
                         with open(return_path, 'wb') as img_file:
@@ -97,6 +97,8 @@ class image_get:
                 print("returning")
 
                 return [self.size, self.size], return_path
+            
+        return [self.size, self.size], self.old_image
 
 
 

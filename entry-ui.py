@@ -19,6 +19,7 @@ from get_metadata import get_artist
 from wave_renderer import WaveVisualizer 
 from queue_handler import shuffler
 from queue_handler import generated_unshuffled_queue
+from get_files import get_drives
 from Song_Bar import SongBar
 from input_handler import previous
 from input_handler import skip
@@ -59,7 +60,7 @@ listener_thread = threading.Thread(target=listening)
 listener_thread.daemon = True  # Make it a daemon thread so it exits when main thread exits
 # listener_thread.start()
 
-# Set up button rate limit (Because someone stalled my program by spamming the back button. Thanks [REDACTED] :D)
+# Set up button rate limit
 last_button_press_time = 0
 button_press_cooldown = 0.5  # Cooldown time in seconds
 
@@ -80,6 +81,9 @@ default_width, default_height = default_screen_size
 folder_path = user_music_dir()
 og_folder = folder_path
 currently_playing_folder_path = folder_path
+
+# Get other drives
+DRIVES = get_drives()
 
 # Set up the display window
 SCREEN_WIDTH = default_width

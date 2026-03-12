@@ -33,9 +33,10 @@ class SongBar:
 
         # Calculate the new current_length based on mouse position
         relative_x = mouse_position[0] - (((self.screen_width-self.screen_width/5)/2+self.screen_width/5)-self.bar_width_hight/2)
-        relative_x = max(0, min(relative_x, self.bar_width_hight))  # Clamp to bar width
-        relative_y = mouse_position[1] - ((self.screen_height/2+(120*(self.screen_width/1920 + self.screen_height/1147) / 2))+self.bar_width_hight/2)
-        if 0 <= relative_y <= 6:  # Only adjust if mouse is within the bar height
+        relative_x = max(-1, min(relative_x, self.bar_width_hight+1))  # Clamp to bar width
+        relative_y = mouse_position[1] - ((self.screen_height/2+(120*((self.screen_width/1920 + self.screen_height/1147) / 2)))+self.bar_width_hight/2)
+
+        if 0 <= relative_y <= 6 and 0 < relative_x < self.bar_width_hight:  # Only adjust if mouse is within the bar height
             new_current_length = (relative_x / self.bar_width_hight) * self.total_length
             if self.visualizer:
                 self.visualizer.set_position(new_current_length)
