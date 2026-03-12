@@ -1,6 +1,6 @@
 import pygame
 from wave_renderer import WaveVisualizer
-from get_metadata import get_cover_art
+# from get_metadata import get_cover_art
 import os
 
 def skip():
@@ -10,7 +10,7 @@ def skip():
     pygame.mixer.music.stop()  # Stop current music to allow next song to play immediately
     return STARTED, play_pause, play_pause_button_path
 
-def previous(current_time_sec, currently_playing_folder_path, played_songs, queue_raw, queue, SIZE, visualizer, screen, total_length, play_pause, play_pause_button_path, visualizer_running, STARTED, PLAYING_SONG, render_size, cover_art_path, file_path):
+def previous(current_time_sec, currently_playing_folder_path, played_songs, queue_raw, queue, visualizer, screen, total_length, play_pause, play_pause_button_path, visualizer_running, STARTED, PLAYING_SONG, render_size, cover_art_path, file_path, imageH):
     if current_time_sec != None and current_time_sec <= 10:
         try:
             file_path = os.path.join(currently_playing_folder_path, list(played_songs.keys())[-1])
@@ -28,7 +28,7 @@ def previous(current_time_sec, currently_playing_folder_path, played_songs, queu
             played_songs.pop(PLAYING_SONG, None) # Remove the song from played_songs dictionary
                 
             # Get album cover art for the selected track
-            render_size, cover_art_path = get_cover_art(file_path, SIZE)
+            render_size, cover_art_path = imageH.update_image(file_path)
 
             # CREATE AND START WAVE VISUALIZER
             visualizer = WaveVisualizer(file_path, 

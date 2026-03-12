@@ -1,92 +1,115 @@
 import os
+from pathlib import Path
 from mutagen.mp3 import MP3
 from mutagen.id3 import ID3, APIC
 from mutagen.easyid3 import EasyID3
 from PIL import Image
+import pygame
+import shutil
+from mutagen import File as MutagenFile
 
-def get_cover_art(mp3_file_path, size=640, output_dir=os.path.join(os.path.dirname(__file__), "temp_cover_art")):
-    """
-    Extracts the cover art from an MP3 file using the mutagen library.
-    """
+def reSize(path, size):
+    img = Image.open(path)
 
-    print(mp3_file_path, output_dir)
+    width, height = img.size
 
-    try:
-        # Load the MP3 file with mutagen
-        audio = MP3(mp3_file_path)
+    img = img.resize((int(width*(size/height)), size), Image.Resampling.LANCZOS)
+
+    img.save(path)
+
+    return [int(width*(size/height)), size]
+
+class image_get:
+    def __init__(self, screen, size, output_dir=os.path.join(os.path.dirname(__file__), "main_cover_art/"), typeOf="cover"):
+        self.screen = screen
+        self.size = size
+        self.output_dir = output_dir
+        self.typeOf = typeOf
+        self.screen_width, self.screen_height = self.screen.get_size()
+        if not os.path.exists(self.output_dir):
+            os.makedirs(self.output_dir)
+        shutil.copy(os.path.join(os.path.dirname(__file__), "assets/default_cover.jpg"), os.path.join(os.path.dirname(__file__), "main_cover_art/"))
+        self.old_image = os.path.join(os.path.dirname(__file__), "main_cover_art/default_cover.jpg")
+        self.file_path = os.path.join(os.path.dirname(__file__), "main_cover_art/default_cover.jpg")
+
+    def update_image(self, file_path):
+        if Path(file_path).is_file():
+            if Path(self.old_image).is_file():
+                os.remove(self.old_image)
+
+            skip = False
+            
+            if Path(file_path).is_file():
+                file = MutagenFile(file_path)
+            else:
+                skip = True
+                file = None
+
+            if file and file.tags and not skip:
+                for tag in file.tags.getall('APIC'):
+                    print("debug3")
+                    if isinstance(tag, APIC):
+                        if not os.path.exists(self.output_dir):
+                            os.makedirs(self.output_dir)
+                        if tag.mime == 'image/jpeg':
+                            ext = 'jpg'
+                        elif tag.mime == 'image/png':
+                            ext = 'png'
+                        else:
+                            print(f"Unsupported image mime type: {tag.mime}")
+                            continue
+                        
+                        track_title = file.get('TIT2', ['temp'])[0]
+                        return_path = os.path.join(os.path.dirname(__file__), f"main_cover_art/{track_title.replace('/', '_')}_{self.typeOf}.{ext}")
+
+                        with open(return_path, 'wb') as img_file:
+                            img_file.write(tag.data)
+                        
+                        print(f"Successfully extracted cover art to: {return_path}")
+
+                        renSize = reSize(return_path, self.size)
+
+                        self.old_image = return_path
+
+                        self.file_path = file_path
+
+                        return renSize, return_path
+                    
+            else:
+                if Path(self.old_image).is_file():
+                    os.remove(self.old_image)
+
+                if not os.path.exists(self.output_dir):
+                    os.makedirs(self.output_dir)
+
+                shutil.copy(os.path.join(os.path.dirname(__file__), "assets/default_cover.jpg"), os.path.join(os.path.dirname(__file__), "main_cover_art/"))
+
+                return_path = os.path.join(os.path.dirname(__file__), "main_cover_art/default_cover.jpg")
+
+                renSize = reSize(return_path, self.size)
+
+                self.old_image = return_path
+
+                print(return_path)
+
+                self.file_path = file_path
+
+                print("returning")
+
+                return [self.size, self.size], return_path
+
+
+
+    def update_size(self, is_custom_size=False, custom_size = 640):
+        if is_custom_size:
+            self.size = custom_size
         
-        # Check if there are any ID3 tags
-        if not audio.tags:
-            print(f"No ID3 tags found in {mp3_file_path}")
-            return [size, size], os.path.join(os.path.dirname(__file__), "assets/default_cover.jpg")
-
-        # Iterate over the tags to find the album art (APIC tag)
-        for tag in audio.tags.getall('APIC'):
-            if isinstance(tag, APIC):
-                # Ensure the output directory exists
-                if not os.path.exists(output_dir):
-                    os.makedirs(output_dir)
-                
-                # Determine file extension based on image mime type
-                if tag.mime == 'image/jpeg':
-                    ext = 'jpg'
-                elif tag.mime == 'image/png':
-                    ext = 'png'
-                else:
-                    print(f"Unsupported image mime type: {tag.mime}")
-                    continue
-                
-                # Create the output filename
-                # track_title = audio.get('TIT2', ['temp'])[0]
-                # output_filename = f"{track_title.replace('/', '_')}_cover.{ext}"
-                output_path = os.path.join(output_dir, "temp_cover." + ext)
-
-                # Write the image data to a file
-                with open(output_path, 'wb') as img_file:
-                    img_file.write(tag.data)
-                
-                print(f"Successfully extracted cover art to: {output_path}")
-
-                img = Image.open(output_path)
-
-                width, height = img.size
-
-                img = img.resize((int(width*(size/height)), size), Image.Resampling.LANCZOS)
-
-                img.save(output_path)
-
-                return [int(width*(size/height)), size], output_path
+        self.screen_width, self.screen_height = self.screen.get_size()
+        self.size = int(640 * ((self.screen_width/1920 + self.screen_height/1147) / 2))
         
-        print(f"No cover art (APIC tag) found in {mp3_file_path}")
+        render_size, cover_art_path =  self.update_image(self.file_path)
 
-        print(f"No image found using default")
-
-        output_path = os.path.join(os.path.dirname(__file__), "assets/default_cover.jpg")
-
-        img = Image.open(output_path)
-
-        width, height = img.size
-
-        img = img.resize((int(width*(size/height)), size), Image.Resampling.LANCZOS)
-
-        img.save(output_path)
-
-        return [size, size], output_path
-
-    except Exception as e:
-        print(f"No image found using default")
-
-        output_path = os.path.join(os.path.dirname(__file__), "assets/default_cover.jpg")
-
-        img = Image.open(output_path)
-
-        width, height = img.size
-
-        img = img.resize((int(width*(size/height)), size), Image.Resampling.LANCZOS)
-
-        img.save(output_path)
-
-        return [size, size], output_path
+        return render_size, cover_art_path
     
 def get_artist(mp3_file_path):
     # Load the MP3 file with mutagen

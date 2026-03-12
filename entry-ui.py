@@ -13,7 +13,8 @@ import sys
 from platformdirs import user_music_dir
 from pathlib import Path
 from get_files import get_music_files_and_directories
-from get_metadata import get_cover_art
+# from get_metadata import get_cover_art # About to be deprecated
+from get_metadata import image_get
 from get_metadata import get_artist
 from wave_renderer import WaveVisualizer 
 from queue_handler import shuffler
@@ -154,6 +155,7 @@ previous_button_color = (64, 64, 64)  # Default gray for previous button
 # queue = FILES_ONLY.copy()  # Initialize queue with available songs in the current directory
 
 volume = volume_manager(screen, SCREEN_WIDTH, SCREEN_HEIGHT)
+album_handler = image_get(screen, 640)
 
 # ============================================================================
 # MAIN APPLICATION LOOP
@@ -183,6 +185,10 @@ while running:
             volume.resize(SCREEN_WIDTH, SCREEN_HEIGHT)
             if song_length_bar:
                 song_length_bar.resize(SCREEN_WIDTH, SCREEN_HEIGHT)
+
+            render_size, cover_art_path = album_handler.update_size()
+
+            album_cover = pygame.image.load(cover_art_path)
 
         if event.type == pygame.MOUSEMOTION:
             mouse_pos = event.pos  # Update mouse position on movement
@@ -247,7 +253,7 @@ while running:
 
                 # Check if previous button was clicked
                 if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-80+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-30+SCREEN_WIDTH/5 and SCREEN_HEIGHT-50 <= mouse_pos[1] <= SCREEN_HEIGHT-30 and visualizer_running:
-                    play_pause, played_songs, queue_raw, queue, play_pause_button_path, visualizer, STARTED, PLAYING_SONG, render_size, cover_art_path, total_length, visualizer_running = previous(current_time_sec, currently_playing_folder_path, played_songs, queue_raw, queue, SIZE, visualizer, screen, total_length, play_pause, play_pause_button_path, visualizer_running, STARTED, PLAYING_SONG, render_size, cover_art_path, file_path)
+                    play_pause, played_songs, queue_raw, queue, play_pause_button_path, visualizer, STARTED, PLAYING_SONG, render_size, cover_art_path, total_length, visualizer_running = previous(current_time_sec, currently_playing_folder_path, played_songs, queue_raw, queue, visualizer, screen, total_length, play_pause, play_pause_button_path, visualizer_running, STARTED, PLAYING_SONG, render_size, cover_art_path, file_path, album_handler)
                     album_cover = pygame.image.load(cover_art_path)  # Update album cover cache with the new cover art when going to the previous song
                     song_length_bar = SongBar(total_length, current_time_sec, SCREEN_WIDTH, SCREEN_HEIGHT, screen, visualizer)
 
@@ -304,7 +310,7 @@ while running:
                             total_length = temp_sound_object.get_length() # Length in seconds
 
                             # Get image for the selected track
-                            render_size, cover_art_path = get_cover_art(file_path, SIZE)
+                            render_size, cover_art_path = album_handler.update_image(file_path)
                             album_cover = pygame.image.load(cover_art_path)  # Update album cover cache with the new cover art when a song is selected
 
                             play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Change play/pause button to hover state when a new song is selected
@@ -365,7 +371,7 @@ while running:
                         total_length = temp_sound_object.get_length() # Length in seconds
 
                         # Get metadata for the selected track
-                        render_size, cover_art_path = get_cover_art(file_path, SIZE)
+                        render_size, cover_art_path = album_handler.update_image(file_path)
                         album_cover = pygame.image.load(cover_art_path)  # Update album cover cache with the new cover art when a song is selected
 
                         play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Change play/pause button to hover state when a new song is selected
@@ -452,7 +458,7 @@ while running:
                         total_length = temp_sound_object.get_length() # Length in seconds
 
                         # Get image for the selected track
-                        render_size, cover_art_path = get_cover_art(file_path, SIZE)
+                        render_size, cover_art_path = album_handler.update_image(file_path)
                         album_cover = pygame.image.load(cover_art_path)  # Update album cover cache with the new cover art when a song is selected
 
                         play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Change play/pause button to hover state when a new song is selected
@@ -527,7 +533,7 @@ while running:
                     total_length = temp_sound_object.get_length() # Length in seconds
 
                     # Get image for the selected track
-                    render_size, cover_art_path = get_cover_art(file_path, SIZE)
+                    render_size, cover_art_path = album_handler.update_image(file_path)
                     album_cover = pygame.image.load(cover_art_path)  # Update album cover cache with the new cover art when a song is selected
 
                     play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Change play/pause button to hover state when a new song is selected
@@ -548,7 +554,7 @@ while running:
             STARTED, play_pause, play_pause_button_path = skip()
 
         if input_key == Key.media_previous and STARTED:
-            play_pause, played_songs, queue_raw, queue, play_pause_button_path, visualizer, STARTED, PLAYING_SONG, render_size, cover_art_path = previous(current_time_sec, currently_playing_folder_path, played_songs, queue_raw, queue, SIZE, visualizer, screen, total_length, play_pause, play_pause_button_path, visualizer_running, STARTED, PLAYING_SONG, render_size, cover_art_path, file_path) 
+            play_pause, played_songs, queue_raw, queue, play_pause_button_path, visualizer, STARTED, PLAYING_SONG, render_size, cover_art_path = previous(current_time_sec, currently_playing_folder_path, played_songs, queue_raw, queue, visualizer, screen, total_length, play_pause, play_pause_button_path, visualizer_running, STARTED, PLAYING_SONG, render_size, cover_art_path, file_path, album_handler) 
             album_cover = pygame.image.load(cover_art_path)  # Update album cover cache with the new cover art when going to the previous song
 
     # ========================================================================
@@ -574,7 +580,7 @@ while running:
                 PLAYING_SONG = newsong
 
                 # Get cover art and update visualizer for the new song
-                render_size, cover_art_path = get_cover_art(file_path, SIZE)
+                render_size, cover_art_path = album_handler.update_image(file_path)
                 album_cover = pygame.image.load(cover_art_path)  # Update album cover cache with the new cover art when a song is selected
 
                 # Load the sound file as a Sound object to get its length
@@ -735,13 +741,6 @@ while running:
         song_length_bar.update(current_time_sec)
     except:
         pass
-
-    # Update album cover if screen size changed
-    if SIZE != OLD_SIZE:
-        render_size, cover_art_path = get_cover_art(os.path.join(currently_playing_folder_path, PLAYING_SONG), SIZE)
-        album_cover = pygame.image.load(cover_art_path)  # Update album cover cache with the new cover art when a song is selected
-
-    OLD_SIZE = SIZE
 
     # Volume renderer
 
