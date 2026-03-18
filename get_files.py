@@ -2,6 +2,7 @@ import os
 from platformdirs import user_music_dir
 from pathlib import Path
 import psutil
+import pygame
 
 def get_music_files_and_directories(folder_path, SCREEN_HEIGHT, og_folder, dir_scroll=0, file_scroll=0):
     try:
@@ -61,10 +62,20 @@ def get_music_files_and_directories(folder_path, SCREEN_HEIGHT, og_folder, dir_s
 
         return DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, og_folder
     
-def get_drives():
-    partitions = psutil.disk_partitions(all=True)
-    drives = []
-    for p in partitions:
-        drives.append(p.mountpoint)
-    return drives
+def get_drives(oper):
+    if oper == "windows" or oper == "linux":
+        partitions = psutil.disk_partitions(all=True)
+        drives = []
+        for p in partitions:
+            drives.append(p.mountpoint)
+        return drives
+    else:
+        drives = []
+        volumes = Path('/Volumes/')
+        for drive in volumes.iterdir():
+            drives.append(drive)
+        
+        return drives
+    
+
         

@@ -597,8 +597,6 @@ if __name__ == "__main__":
         
         # Load and play the MP3 file using pygame mixer
         print("Starting playback...")
-        pygame.mixer.music.load(MP3_FILE)
-        pygame.mixer.music.play()
         
         # Run the Pygame Loop in the Main Thread
         main_loop(audio_data, audio_duration)

@@ -13,7 +13,6 @@ import sys
 from platformdirs import user_music_dir
 from pathlib import Path
 from get_files import get_music_files_and_directories
-# from get_metadata import get_cover_art # About to be deprecated
 from get_metadata import image_get
 from get_metadata import get_artist
 from wave_renderer import WaveVisualizer 
@@ -82,8 +81,68 @@ folder_path = user_music_dir()
 og_folder = folder_path
 currently_playing_folder_path = folder_path
 
+oper = ""
 # Get other drives
-DRIVES = get_drives()
+if sys.platform.startswith('win'):
+    print("Running on Windows")
+    oper = "windows"
+elif sys.platform.startswith('linux'):
+    print("Running on Linux")
+    oper = "linux"
+elif sys.platform == 'darwin':
+    print("Running on macOS")
+    oper = "mac"
+else:
+    print("Unknown OS")
+    oper = "default"
+
+DRIVES = get_drives(oper)
+
+multi_drives = False
+if len(DRIVES) > 1:
+    multi_drives = True
+    print(DRIVES)
+
+if not os.path.exists(folder_path):
+    for drive in DRIVES:
+        new_folder = drive + folder_path[1:]
+        if os.path.exists(new_folder):
+            og_folder = new_folder
+            folder = new_folder
+            break
+    if not os.path.exists(folder_path):
+        new_folder = DRIVES[0]
+        og_folder = new_folder
+        folder = new_folder
+
+class DriveSwitch:
+    def __init__(self, og):
+        self.index = 0
+        self.defualt = og[1:]
+        self.defualt2 = "/music"
+    
+    def switchDrive(self, direction):
+        self.index += direction
+        if self.index < 0:
+            self.index = len(DRIVES)-1
+        if self.index > len(DRIVES):
+            self.index = 0
+
+        if os.path.exists(str(DRIVES[self.index])+ self.defualt):
+            if oper == "mac":
+                return self.defualt
+            else:
+                return str(DRIVES[self.index]) + self.defualt
+            
+        elif oper == "mac" and str(DRIVES[self.index]) == "/Volumes/Macintosh HD":
+                return self.defualt
+            
+        elif os.path.exists(str(DRIVES[self.index])+ self.defualt2):
+            return str(DRIVES[self.index])+ self.defualt2
+        else:
+            return DRIVES[self.index]
+
+drive_handler = DriveSwitch(og_folder)
 
 # Set up the display window
 SCREEN_WIDTH = default_width
@@ -343,6 +402,11 @@ while running:
                             shuffle_button_color = (64, 255, 64)  # Change shuffle button color to indicate shuffle is on
 
                     shuffle = not shuffle  # Toggle shuffle state
+                    shuffle_button_color = (64, 255, 64)
+
+                # Check if a drive nav button was pressed
+                if (SCREEN_WIDTH/5 + 10) < mouse_pos[0] < (SCREEN_WIDTH/5 + 10) + 25 and (SCREEN_HEIGHT/19) < mouse_pos[1] < (SCREEN_HEIGHT/19) + 40:
+                    folder_path = drive_handler.switchDrive(-1)
 
                 # Check if a directory was clicked and navigate into it
                 for button in directory_buttons:
@@ -712,6 +776,9 @@ while running:
     pygame.draw.rect(screen, skip_button_color, ((SCREEN_WIDTH-SCREEN_WIDTH/5)/2+30+SCREEN_WIDTH/5, SCREEN_HEIGHT-50, 50, 20))
     pygame.draw.rect(screen, previous_button_color, ((SCREEN_WIDTH-SCREEN_WIDTH/5)/2-80+SCREEN_WIDTH/5, SCREEN_HEIGHT-50, 50, 20))
     pygame.draw.rect(screen, shuffle_button_color, ((SCREEN_WIDTH-SCREEN_WIDTH/5)/2-135+SCREEN_WIDTH/5, SCREEN_HEIGHT-50, 50, 20))
+
+    if multi_drives:
+        pygame.draw.rect(screen, (64, 64, 64), ((SCREEN_WIDTH/5 + 10), (SCREEN_HEIGHT/19), 25, 40))
 
     image_rect = album_cover.get_rect()
     # Center the cover image on the right side of the screen
