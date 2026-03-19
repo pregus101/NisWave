@@ -68,7 +68,7 @@ button_press_cooldown = 0.5  # Cooldown time in seconds
 pygame.init()
 pygame.mixer.init()  # Initialize mixer for audio playback
 pygame.font.init()  # Initialize font module and load custom font
-font = pygame.font.SysFont(os.path.join(os.path.dirname(__file__), "Cyberbit.ttf"), 30)
+font = pygame.font.SysFont(os.path.join(os.path.dirname(__file__), "/assets/Cyberbit.ttf"), 30)
 
 # Extract and store screen dimensions
 default_screen_size = []
