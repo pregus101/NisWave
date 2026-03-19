@@ -25,6 +25,7 @@ from input_handler import skip
 from volume_worker import volume_manager
 import time
 import random
+import shutil
 
 # =============================================================================
 # Screen Initialization
@@ -241,6 +242,7 @@ while running:
         if event.type == pygame.QUIT:
             pygame.quit()
             running = False
+            shutil.rmtree(os.path.join(os.path.dirname(__file__), "main_cover_art/"))
             sys.exit()
 
         if event.type == pygame.WINDOWRESIZED:
@@ -508,7 +510,7 @@ while running:
                     if FILES_ONLY:
                         song_play = ""
                         if shuffle:
-                            song_play = FILES_ONLY[random.randint(0, len(FILES_ONLY))]
+                            song_play = FILES_ONLY[random.randint(0, len(FILES_ONLY)-1)]
                             queue_raw = generated_unshuffled_queue(song_play, FILES_ONLY.copy())
                             queue = shuffler(queue_raw, song_play, True)
                         else:
@@ -848,5 +850,6 @@ while running:
     # Refresh the display with all rendered elements
     pygame.display.flip()
 
+os.remove(os.path.join(os.path.dirname(__file__), "main_cover_art"))
 pygame.quit()
 sys.exit()
