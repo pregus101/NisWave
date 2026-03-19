@@ -57,7 +57,7 @@ def listening():
 
 listener_thread = threading.Thread(target=listening)
 listener_thread.daemon = True  # Make it a daemon thread so it exits when main thread exits
-# listener_thread.start()
+listener_thread.start()
 
 # Set up button rate limit
 last_button_press_time = 0
@@ -80,20 +80,21 @@ default_width, default_height = default_screen_size
 folder_path = user_music_dir()
 og_folder = folder_path
 currently_playing_folder_path = folder_path
+old_folderpath = folder_path
 
 oper = ""
 # Get other drives
 if sys.platform.startswith('win'):
-    print("Running on Windows")
+    # print("Running on Windows")
     oper = "windows"
 elif sys.platform.startswith('linux'):
-    print("Running on Linux")
+    # print("Running on Linux")
     oper = "linux"
 elif sys.platform == 'darwin':
-    print("Running on macOS")
+    # print("Running on macOS")
     oper = "mac"
 else:
-    print("Unknown OS")
+    # print("Unknown OS")
     oper = "default"
 
 DRIVES = get_drives(oper)
@@ -204,7 +205,7 @@ metadata_cache = {}
 
 # Frame rate limiter for battery savings
 clock = pygame.time.Clock()
-FPS = 30  # Reduced from 60 for significant battery savings
+FPS = 20
 
 # set defualt button colors
 skip_button_color = (64, 64, 64)  # Default gray for skip button
@@ -212,6 +213,7 @@ play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pl
 back_button_color = (64, 64, 64)  # Default gray for back button
 shuffle_button_color = (64, 64, 64)  # Default gray for shuffle button
 previous_button_color = (64, 64, 64)  # Default gray for previous button
+drive_prev_color = (64, 64, 64)  # Default gray for drive previous button
 
 # # Create the queue for auto-playing songs (will be populated with files from the current directory)
 # DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons = get_music_files_and_directories(folder_path, SCREEN_HEIGHT)
@@ -282,6 +284,8 @@ while running:
             skip_button_color = (128, 128, 128) if check_hover((SCREEN_WIDTH-SCREEN_WIDTH/5)/2+30+SCREEN_WIDTH/5, SCREEN_HEIGHT-50, (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+80+SCREEN_WIDTH/5, SCREEN_HEIGHT-30, mx, my) else (64, 64, 64)
             previous_button_color = (128, 128, 128) if check_hover((SCREEN_WIDTH-SCREEN_WIDTH/5)/2-80+SCREEN_WIDTH/5, SCREEN_HEIGHT-50, (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-30+SCREEN_WIDTH/5, SCREEN_HEIGHT-30, mx, my) else (64, 64, 64)
 
+            drive_prev_color = (128, 128, 128) if check_hover((SCREEN_WIDTH/5 + 10), (SCREEN_HEIGHT/19),  ((SCREEN_WIDTH/5 + 10) + 25), ((SCREEN_HEIGHT/19) + 40), mx, my) else (64, 64, 64)
+
 
         # Handle mouse button clicks (folder/file selection and navigation)
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -297,17 +301,19 @@ while running:
                         new_current_time = song_length_bar.adjust_time(mouse_pos)
 
                 # Get current directory contents for button interaction
-                
-                try:
-                    DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, folder_path = get_music_files_and_directories(folder_path, SCREEN_HEIGHT, og_folder, dir_scroll_offset, file_scroll_offset)
-                except Exception as e:
-                    DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, folder_path = get_music_files_and_directories(og_folder, SCREEN_HEIGHT, og_folder, dir_scroll_offset, file_scroll_offset)
-                    print("Error accessing directory contents for button interaction:", e)
+                if folder_path != old_folderpath:
+                    try:
+                        DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, folder_path = get_music_files_and_directories(folder_path, SCREEN_HEIGHT, og_folder, dir_scroll_offset, file_scroll_offset)
+                        old_folderpath = folder_path
+                    except Exception as e:
+                        DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, folder_path = get_music_files_and_directories(og_folder, SCREEN_HEIGHT, og_folder, dir_scroll_offset, file_scroll_offset)
+                        print("Error accessing directory contents for button interaction:", e)
+                        old_folderpath = folder_path
+
 
                 # Check if back button was clicked (navigate to parent directory)
                 if SCREEN_WIDTH/5-40 <= mouse_pos[0] <= SCREEN_WIDTH/5-20 and 5 <= mouse_pos[1] <= 25:
                     folder_path = os.path.dirname(folder_path)
-                    print("Back button clicked, new folder path:", folder_path)
 
                 # Check if skip button was clicked
                 if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+30+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+80+SCREEN_WIDTH/5 and SCREEN_HEIGHT-50 <= mouse_pos[1] <= SCREEN_HEIGHT-30 and visualizer_running:
@@ -334,7 +340,7 @@ while running:
                         else:
                             STARTED = True
                             play_pause = "play"
-                            
+                             
                             try:
                                 WaveVisualizer.set_pause_state(visualizer, False)  # Unpause the visualizer
                             except:
@@ -396,17 +402,15 @@ while running:
                     if not PLAYING_SONG == '':
                         if shuffle:
                             queue = generated_unshuffled_queue(PLAYING_SONG, queue_raw)
-                            shuffle_button_color = (128, 128, 128)  # Change shuffle button color to indicate shuffle is off
                         else:
                             queue = shuffler(queue_raw, PLAYING_SONG)
-                            shuffle_button_color = (64, 255, 64)  # Change shuffle button color to indicate shuffle is on
 
                     shuffle = not shuffle  # Toggle shuffle state
-                    shuffle_button_color = (64, 255, 64)
+                    shuffle_button_color = (64, 255, 64) if shuffle else (128, 128, 128) # Change shuffle button color to indicate shuffle is off or off
 
                 # Check if a drive nav button was pressed
                 if (SCREEN_WIDTH/5 + 10) < mouse_pos[0] < (SCREEN_WIDTH/5 + 10) + 25 and (SCREEN_HEIGHT/19) < mouse_pos[1] < (SCREEN_HEIGHT/19) + 40:
-                    folder_path = drive_handler.switchDrive(-1)
+                    folder_path = Path(drive_handler.switchDrive(-1))
 
                 # Check if a directory was clicked and navigate into it
                 for button in directory_buttons:
@@ -778,7 +782,7 @@ while running:
     pygame.draw.rect(screen, shuffle_button_color, ((SCREEN_WIDTH-SCREEN_WIDTH/5)/2-135+SCREEN_WIDTH/5, SCREEN_HEIGHT-50, 50, 20))
 
     if multi_drives:
-        pygame.draw.rect(screen, (64, 64, 64), ((SCREEN_WIDTH/5 + 10), (SCREEN_HEIGHT/19), 25, 40))
+        pygame.draw.rect(screen, drive_prev_color, ((SCREEN_WIDTH/5 + 10), (SCREEN_HEIGHT/19), 25, 40))
 
     image_rect = album_cover.get_rect()
     # Center the cover image on the right side of the screen

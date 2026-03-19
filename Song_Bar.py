@@ -12,7 +12,6 @@ class SongBar:
         self.visualizer = visualizer
     
     def update(self, current_length):
-        draw = False
         if current_length is not None:
             self.current_length = current_length
             self.draw()

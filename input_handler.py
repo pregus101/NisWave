@@ -47,6 +47,7 @@ def previous(current_time_sec, currently_playing_folder_path, played_songs, queu
             play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Change play/pause button to playing state when a new song is selected
 
     else:
+        file_path = os.path.join(currently_playing_folder_path, PLAYING_SONG)
         # CREATE AND START WAVE VISUALIZER
         visualizer = WaveVisualizer(file_path, 
                                     render_size[0], 
@@ -56,5 +57,5 @@ def previous(current_time_sec, currently_playing_folder_path, played_songs, queu
         visualizer_running = True
         play_pause = "play"  # Ensure play/pause state is set to "play" when previous button is clicked
         play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Change play/pause button to playing state when a new song is selected
-        STARTED = True
+        # STARTED = True
     return play_pause, played_songs, queue_raw, queue, play_pause_button_path, visualizer, STARTED, PLAYING_SONG, render_size, cover_art_path, total_length, visualizer_running
