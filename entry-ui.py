@@ -346,7 +346,7 @@ while running:
                             try:
                                 WaveVisualizer.set_pause_state(visualizer, False)  # Unpause the visualizer
                             except:
-                                pass  # Visualizer may not be initialized yet, ignore if error occurs
+                                pass  # Visualizer may not be initialized yet, ignore if error occurs 
                                 STARTED = False
                                 visualizer_running = False
                                 visualizer = None  # Reset visualizer instance when stopping playback
@@ -357,7 +357,7 @@ while running:
                         if FILES_ONLY:
                             song_play = ""
                             if shuffle:
-                                song_play = FILES_ONLY[random.randint(0, len(FILES_ONLY))]
+                                song_play = FILES_ONLY[random.randint(0, len(FILES_ONLY)-1)]
                                 queue_raw = generated_unshuffled_queue(song_play, FILES_ONLY.copy())
                                 queue = shuffler(queue_raw, song_play, True)
                             else:
@@ -410,8 +410,16 @@ while running:
                     shuffle = not shuffle  # Toggle shuffle state
                     shuffle_button_color = (64, 255, 64) if shuffle else (128, 128, 128) # Change shuffle button color to indicate shuffle is off or off
 
+                # Check if a drive was added
+                DRIVES = get_drives(oper)
+
+                multi_drives = False
+                if len(DRIVES) > 1:
+                    multi_drives = True
+                    print(DRIVES)
+
                 # Check if a drive nav button was pressed
-                if (SCREEN_WIDTH/5 + 10) < mouse_pos[0] < (SCREEN_WIDTH/5 + 10) + 25 and (SCREEN_HEIGHT/19) < mouse_pos[1] < (SCREEN_HEIGHT/19) + 40:
+                if (SCREEN_WIDTH/5 + 10) < mouse_pos[0] < (SCREEN_WIDTH/5 + 10) + 25 and (SCREEN_HEIGHT/19) < mouse_pos[1] < (SCREEN_HEIGHT/19) + 40 and multi_drives:
                     folder_path = Path(drive_handler.switchDrive(-1))
 
                 # Check if a directory was clicked and navigate into it
@@ -676,16 +684,16 @@ while running:
 
                 song_length_bar = SongBar(total_length, current_time_sec, SCREEN_WIDTH, SCREEN_HEIGHT, screen, visualizer)
 
-                # Load and cache album cover art
-                album_cover = pygame.image.load(cover_art_path)
-
 
             else:
                 print("No more songs in the queue to play.")
                 STARTED = False  # Stop playback if there are no more songs to play
                 visualizer_running = False  # Stop the visualizer as well
-                cover_art_path = os.path.join(os.path.dirname(__file__), "assets/default_cover.jpg")  # Reset to default cover art path
+                render_size, cover_art_path = album_handler.update_image()  # Reset to default cover art path
                 album_cover = pygame.image.load(cover_art_path)  # Reset album cover cache to default when no more songs are available
+                PLAYING_SONG = ""
+
+                song_length_bar = None
             
             if retry:
                 pygame.mixer.music.stop()

@@ -32,7 +32,28 @@ class image_get:
         self.old_image = os.path.join(os.path.dirname(__file__), "main_cover_art/default_cover.jpg")
         self.file_path = os.path.join(os.path.dirname(__file__), "main_cover_art/default_cover.jpg")
 
-    def update_image(self, file_path):
+    def default_cover(self, file_path):
+        if Path(self.old_image).is_file():
+            os.remove(self.old_image)
+
+        if not os.path.exists(self.output_dir):
+            os.makedirs(self.output_dir)
+
+        shutil.copy(os.path.join(os.path.dirname(__file__), "assets/default_cover.jpg"), os.path.join(os.path.dirname(__file__), "main_cover_art/"))
+
+        return_path = os.path.join(os.path.dirname(__file__), "main_cover_art/default_cover.jpg")
+
+        renSize = reSize(return_path, self.size)
+
+        self.old_image = return_path
+
+        print(return_path)
+
+        self.file_path = file_path
+
+        return [self.size, self.size], return_path
+
+    def update_image(self, file_path=""):
         if Path(file_path).is_file():
             if Path(self.old_image).is_file():
                 os.remove(self.old_image)
@@ -76,31 +97,9 @@ class image_get:
                         return renSize, return_path
                     
             else:
-                if Path(self.old_image).is_file():
-                    os.remove(self.old_image)
-
-                if not os.path.exists(self.output_dir):
-                    os.makedirs(self.output_dir)
-
-                shutil.copy(os.path.join(os.path.dirname(__file__), "assets/default_cover.jpg"), os.path.join(os.path.dirname(__file__), "main_cover_art/"))
-
-                return_path = os.path.join(os.path.dirname(__file__), "main_cover_art/default_cover.jpg")
-
-                renSize = reSize(return_path, self.size)
-
-                self.old_image = return_path
-
-                print(return_path)
-
-                self.file_path = file_path
-
-                print("returning")
-
-                return [self.size, self.size], return_path
-            
-        return [self.size, self.size], self.old_image
-
-
+                return self.default_cover(file_path)
+                
+        return self.default_cover(file_path)
 
     def update_size(self, is_custom_size=False, custom_size = 640):
         if is_custom_size:
@@ -112,7 +111,7 @@ class image_get:
         render_size, cover_art_path =  self.update_image(self.file_path)
 
         return render_size, cover_art_path
-    
+
 def get_artist(mp3_file_path):
     # Load the MP3 file with mutagen
     try:
