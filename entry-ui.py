@@ -638,7 +638,7 @@ while running:
             STARTED, play_pause, play_pause_button_path = skip()
 
         if input_key == Key.media_previous and STARTED:
-            play_pause, played_songs, queue_raw, queue, play_pause_button_path, visualizer, STARTED, PLAYING_SONG, render_size, cover_art_path = previous(current_time_sec, currently_playing_folder_path, played_songs, queue_raw, queue, visualizer, screen, total_length, play_pause, play_pause_button_path, visualizer_running, STARTED, PLAYING_SONG, render_size, cover_art_path, file_path, album_handler) 
+            play_pause, played_songs, queue_raw, queue, play_pause_button_path, visualizer, STARTED, PLAYING_SONG, render_size, cover_art_path, total_length, visualizer_running = previous(current_time_sec, currently_playing_folder_path, played_songs, queue_raw, queue, visualizer, screen, total_length, play_pause, play_pause_button_path, visualizer_running, STARTED, PLAYING_SONG, render_size, cover_art_path, file_path, album_handler)
             album_cover = pygame.image.load(cover_art_path)  # Update album cover cache with the new cover art when going to the previous song
 
     # ========================================================================

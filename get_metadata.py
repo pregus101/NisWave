@@ -67,34 +67,37 @@ class image_get:
                 file = None
 
             if file and file.tags and not skip:
-                for tag in file.tags.getall('APIC'):
-                    print("debug3")
-                    if isinstance(tag, APIC):
-                        if not os.path.exists(self.output_dir):
-                            os.makedirs(self.output_dir)
-                        if tag.mime == 'image/jpeg':
-                            ext = 'jpg'
-                        elif tag.mime == 'image/png':
-                            ext = 'png'
-                        else:
-                            print(f"Unsupported image mime type: {tag.mime}")
-                            continue
-                        
-                        track_title = os.path.basename(file_path)[:-4]
-                        return_path = os.path.join(os.path.dirname(__file__), f"main_cover_art/{track_title.replace('/', '_')}_{self.typeOf}.{ext}")
+                try:
+                    for tag in file.tags.getall('APIC'):
+                        print("debug3")
+                        if isinstance(tag, APIC):
+                            if not os.path.exists(self.output_dir):
+                                os.makedirs(self.output_dir)
+                            if tag.mime == 'image/jpeg':
+                                ext = 'jpg'
+                            elif tag.mime == 'image/png':
+                                ext = 'png'
+                            else:
+                                print(f"Unsupported image mime type: {tag.mime}")
+                                continue
+                            
+                            track_title = os.path.basename(file_path)[:-4]
+                            return_path = os.path.join(os.path.dirname(__file__), f"main_cover_art/{track_title.replace('/', '_')}_{self.typeOf}.{ext}")
 
-                        with open(return_path, 'wb') as img_file:
-                            img_file.write(tag.data)
-                        
-                        print(f"Successfully extracted cover art to: {return_path}")
+                            with open(return_path, 'wb') as img_file:
+                                img_file.write(tag.data)
+                            
+                            print(f"Successfully extracted cover art to: {return_path}")
 
-                        renSize = reSize(return_path, self.size)
+                            renSize = reSize(return_path, self.size)
 
-                        self.old_image = return_path
+                            self.old_image = return_path
 
-                        self.file_path = file_path
+                            self.file_path = file_path
 
-                        return renSize, return_path
+                            return renSize, return_path
+                except:
+                    return self.default_cover(file_path)
                     
             else:
                 return self.default_cover(file_path)
