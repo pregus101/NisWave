@@ -76,6 +76,3 @@ def get_drives(oper):
             drives.append(drive)
         
         return drives
-    
-
-        

@@ -25,3 +25,6 @@ def generated_unshuffled_queue(current_song, queue_defualt):
             queue.remove(queue_defualt[i])
             queue.append(queue_defualt[i])
         return queue
+    
+def new_shuffler():
+    pass

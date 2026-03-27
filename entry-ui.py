@@ -22,6 +22,7 @@ from get_files import get_drives
 from Song_Bar import SongBar
 from input_handler import previous
 from input_handler import skip
+from input_handler import Inputs
 from volume_worker import volume_manager
 import time
 import random
@@ -58,7 +59,7 @@ def listening():
 
 listener_thread = threading.Thread(target=listening)
 listener_thread.daemon = True  # Make it a daemon thread so it exits when main thread exits
-listener_thread.start()
+# listener_thread.start()
 
 # Set up button rate limit
 last_button_press_time = 0
@@ -82,6 +83,8 @@ folder_path = user_music_dir()
 og_folder = folder_path
 currently_playing_folder_path = folder_path
 old_folderpath = folder_path
+
+player = Inputs(folder_path)
 
 oper = ""
 # Get other drives
@@ -326,7 +329,7 @@ while running:
                 if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-80+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-30+SCREEN_WIDTH/5 and SCREEN_HEIGHT-50 <= mouse_pos[1] <= SCREEN_HEIGHT-30 and visualizer_running:
                     play_pause, played_songs, queue_raw, queue, play_pause_button_path, visualizer, STARTED, PLAYING_SONG, render_size, cover_art_path, total_length, visualizer_running = previous(current_time_sec, currently_playing_folder_path, played_songs, queue_raw, queue, visualizer, screen, total_length, play_pause, play_pause_button_path, visualizer_running, STARTED, PLAYING_SONG, render_size, cover_art_path, file_path, album_handler)
                     album_cover = pygame.image.load(cover_art_path)  # Update album cover cache with the new cover art when going to the previous song
-                    song_length_bar = SongBar(total_length, current_time_sec, SCREEN_WIDTH, SCREEN_HEIGHT, screen, visualizer)
+                    song_length_bar = SongBar(total_length, current_time_sec, SCREEN_WIDTH, SCREEN_HEIGHT, screen, visualizer, PLAYING_SONG, artist)
 
                 # Check if pause/play button was clicked
                 if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-25+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2+25+SCREEN_WIDTH/5 and SCREEN_HEIGHT-75 <= mouse_pos[1] <= SCREEN_HEIGHT-25:
@@ -357,7 +360,7 @@ while running:
                         if FILES_ONLY:
                             song_play = ""
                             if shuffle:
-                                song_play = FILES_ONLY[random.randint(0, len(FILES_ONLY)-1)]
+                                song_play = FILES_ONLY[random.randint(0, len(FILES_ONLY))]
                                 queue_raw = generated_unshuffled_queue(song_play, FILES_ONLY.copy())
                                 queue = shuffler(queue_raw, song_play, True)
                             else:
@@ -372,8 +375,6 @@ while running:
                             file_path = os.path.join(folder_path, song_play)
                             currently_playing_folder_path = folder_path  # Update the currently playing folder path
                             STARTED = True
-                            # queue_raw.remove(button[1])
-                            # queue.remove(button[1])
                             PLAYING_SONG = song_play
 
                             # Load the sound file as a Sound object to get its length
@@ -397,7 +398,7 @@ while running:
                             visualizer.play()
                             visualizer_running = True
 
-                            song_length_bar = SongBar(total_length, current_time_sec, SCREEN_WIDTH, SCREEN_HEIGHT, screen, visualizer)
+                            song_length_bar = SongBar(total_length, current_time_sec, SCREEN_WIDTH, SCREEN_HEIGHT, screen, visualizer, PLAYING_SONG, artist)
 
                 # Check if shuffle button was clicked
                 if (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-135+SCREEN_WIDTH/5 <= mouse_pos[0] <= (SCREEN_WIDTH-SCREEN_WIDTH/5)/2-85+SCREEN_WIDTH/5 and SCREEN_HEIGHT-50 <= mouse_pos[1] <= SCREEN_HEIGHT-30:
@@ -440,14 +441,14 @@ while running:
                         
                         play_pause = "play"  # Reset play/pause state to "play" when a new song is selected
                         played_songs = {}  # Clear the list of played songs when a new song is selected
-                        
+
                         # Load and play the selected file
                         file_path = os.path.join(folder_path, button[1])
                         currently_playing_folder_path = folder_path  # Update the currently playing folder path
                         STARTED = True
-                        # queue_raw.remove(button[1])
-                        # queue.remove(button[1])
                         PLAYING_SONG = button[1]
+
+                        visualizer = player.play(file_path)
 
                         # Load the sound file as a Sound object to get its length
                         temp_sound_object = pygame.mixer.Sound(file_path)
@@ -460,17 +461,16 @@ while running:
 
                         play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")  # Change play/pause button to hover state when a new song is selected
 
-                        # CREATE AND START WAVE VISUALIZER
-                        visualizer = WaveVisualizer(file_path, 
-                                                   render_size[0], 
-                                                   render_size[1])
-                        # Set wave color to contrast with album cover
-                        visualizer.set_color_from_image(cover_art_path)
-                        visualizer.load_audio()
-                        visualizer.play()
+                        # # CREATE AND START WAVE VISUALIZER
+                        # visualizer = WaveVisualizer(file_path, 
+                        #                            render_size[0], 
+                        #                            render_size[1])
+                        # # Set wave color to contrast with album cover
+                        # visualizer.load_audio()
+                        # visualizer.play()
                         visualizer_running = True
 
-                        song_length_bar = SongBar(total_length, current_time_sec, SCREEN_WIDTH, SCREEN_HEIGHT, screen, visualizer)
+                        song_length_bar = SongBar(total_length, current_time_sec, SCREEN_WIDTH, SCREEN_HEIGHT, screen, visualizer, PLAYING_SONG, artist)
 
         if event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:
@@ -518,7 +518,7 @@ while running:
                     if FILES_ONLY:
                         song_play = ""
                         if shuffle:
-                            song_play = FILES_ONLY[random.randint(0, len(FILES_ONLY)-1)]
+                            song_play = FILES_ONLY[random.randint(0, len(FILES_ONLY))]
                             queue_raw = generated_unshuffled_queue(song_play, FILES_ONLY.copy())
                             queue = shuffler(queue_raw, song_play, True)
                         else:
@@ -533,8 +533,6 @@ while running:
                         file_path = os.path.join(folder_path, song_play)
                         currently_playing_folder_path = folder_path  # Update the currently playing folder path
                         STARTED = True
-                        # queue_raw.remove(button[1])
-                        # queue.remove(button[1])
                         PLAYING_SONG = song_play
 
                         # Load the sound file as a Sound object to get its length
@@ -557,7 +555,7 @@ while running:
                         visualizer.play()
                         visualizer_running = True
 
-                        song_length_bar = SongBar(total_length, current_time_sec, SCREEN_WIDTH, SCREEN_HEIGHT, screen, visualizer)
+                        song_length_bar = SongBar(total_length, current_time_sec, SCREEN_WIDTH, SCREEN_HEIGHT, screen, visualizer, PLAYING_SONG, artist)
 
     with data_lock:
         input_key = media_input[0] if media_input else None
@@ -608,8 +606,6 @@ while running:
                     file_path = os.path.join(folder_path, song_play)
                     currently_playing_folder_path = folder_path  # Update the currently playing folder path
                     STARTED = True
-                    # queue_raw.remove(button[1])
-                    # queue.remove(button[1])
                     PLAYING_SONG = song_play
 
                     # Load the sound file as a Sound object to get its length
@@ -632,7 +628,7 @@ while running:
                     visualizer.play()
                     visualizer_running = True
 
-                    song_length_bar = SongBar(total_length, current_time_sec, SCREEN_WIDTH, SCREEN_HEIGHT, screen, visualizer)
+                    song_length_bar = SongBar(total_length, current_time_sec, SCREEN_WIDTH, SCREEN_HEIGHT, screen, visualizer, PLAYING_SONG, artist)
 
         if input_key == Key.media_next and visualizer_running:
             STARTED, play_pause, play_pause_button_path = skip()
@@ -682,7 +678,7 @@ while running:
                 visualizer.play()
                 visualizer_running = True
 
-                song_length_bar = SongBar(total_length, current_time_sec, SCREEN_WIDTH, SCREEN_HEIGHT, screen, visualizer)
+                song_length_bar = SongBar(total_length, current_time_sec, SCREEN_WIDTH, SCREEN_HEIGHT, screen, visualizer, PLAYING_SONG, artist)
 
 
             else:

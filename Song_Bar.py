@@ -1,9 +1,8 @@
 import pygame
-from wave_renderer import WaveVisualizer
 
 class SongBar:
     
-    def __init__(self, total_length, current_length, screen_width, screen_height, screen, visualizer):
+    def __init__(self, total_length, current_length, screen_width, screen_height, screen, visualizer, song="", artist=""):
         self.total_length = total_length
         self.current_length = current_length
         self.screen_width = screen_width
