@@ -151,7 +151,7 @@ drive_handler = DriveSwitch(og_folder)
 
 # Set up the display window
 SCREEN_WIDTH = default_width
-SCREEN_HEIGHT = default_height
+SCREEN_HEIGHT = default_height 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE)
 pygame.display.set_caption("pregus101's NisWave app")
 
@@ -163,7 +163,6 @@ running = True
 # Application State Variables
 # =============================================================================
 
-OLD_SIZE = 640  # Previ ous album cover size (for resize detection)
 STARTED = False  # Track whether playback has begun
 PLAYING_SONG = ""  # Currently playing song filename
 
@@ -252,7 +251,7 @@ while running:
             # Update screen dimensions in case window was resized
             SCREEN_WIDTH, SCREEN_HEIGHT = screen.get_size()
             song_select_window = SCREEN_WIDTH / 5
-            volume.resize(SCREEN_WIDTH, SCREEN_HEIGHT)
+            volume.resize()
             if song_length_bar:
                 song_length_bar.resize(SCREEN_WIDTH, SCREEN_HEIGHT)
 

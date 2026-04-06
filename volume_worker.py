@@ -35,8 +35,8 @@ class volume_manager:
             pygame.mixer_music.set_volume(self.current_volume)
         self.draw()
 
-    def resize(self, screen_width, screen_height):
-        self.screen_width = screen_width
-        self.screen_height = screen_height
+    def resize(self):
+        self.screen_width = self.screen.get_width()
+        self.screen_height = self.screen.get_height()
 
 # (((self.screen_width-self.screen_width/5)/2+self.screen_width/5)-self.bar_width_hight/2)

@@ -76,3 +76,28 @@ def get_drives(oper):
             drives.append(drive)
         
         return drives
+    
+def get_files(path, folder_type=False):
+    folder_path = ""
+    if folder_type:
+        folder_type = path
+    else:
+        folder_path = Path(path).parent
+
+    supported_formats = ['.mp3', '.wav', '.flac', '.aac', '.ogg'] #, '.m4a']
+
+    files = [
+        entry for entry in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, entry)) and os.path.splitext(entry)[1].lower() in supported_formats and not(entry[0] == ".")
+    ]
+
+    if not(folder_type):
+        index = files.index(str(path).split("/")[-1])
+        return files, index, str(folder_path)
+    else:
+        return files
+
+
+
+
+
+

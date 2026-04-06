@@ -1,14 +1,16 @@
 import random
+from get_files import get_files
 
 shuffled_queue = []
 
 def shuffler(queue, current_song, first=False):
     queue_copy = queue.copy()
     runA = len(queue)
-    if first:
-        shuffled_queue = [current_song]
-    else:
-        shuffled_queue = []
+    # if first:
+    #     shuffled_queue = [current_song]
+    # else:
+    #     shuffled_queue = []
+    shuffled_queue = []
     print(runA)
     while runA > 1:
         runA = len(queue_copy)
@@ -26,5 +28,9 @@ def generated_unshuffled_queue(current_song, queue_defualt):
             queue.append(queue_defualt[i])
         return queue
     
-def new_shuffler():
-    pass
+def new_shuffler(index, queue_defualt):
+    first_half = queue_defualt[:index+1]
+    second_half = queue_defualt[index+1:]
+    random.shuffle(second_half)
+    return first_half + second_half
+    
