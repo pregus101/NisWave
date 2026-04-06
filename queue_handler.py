@@ -6,17 +6,17 @@ shuffled_queue = []
 def shuffler(queue, current_song, first=False):
     queue_copy = queue.copy()
     runA = len(queue)
-    # if first:
-    #     shuffled_queue = [current_song]
-    # else:
-    #     shuffled_queue = []
+    if first:
+        shuffled_queue = [current_song]
+    else:
+        shuffled_queue = []
     shuffled_queue = []
-    print(runA)
+    temp = ""
     while runA > 1:
         runA = len(queue_copy)
         index = random.randint(0, runA-1)
         shuffled_queue.append(queue_copy[index])
-        queue_copy.remove(shuffled_queue[len(shuffled_queue)-1])
+        queue_copy.pop(index)
     return shuffled_queue
 
 def generated_unshuffled_queue(current_song, queue_defualt):

@@ -3,6 +3,22 @@ from platformdirs import user_music_dir
 from pathlib import Path
 import psutil
 import pygame
+import sys
+
+oper = ""
+# Get other drives
+if sys.platform.startswith('win'):
+    # print("Running on Windows")
+    oper = "windows"
+elif sys.platform.startswith('linux'):
+    # print("Running on Linux")
+    oper = "linux"
+elif sys.platform == 'darwin':
+    # print("Running on macOS")
+    oper = "mac"
+else:
+    # print("Unknown OS")
+    oper = "default"
 
 def get_music_files_and_directories(folder_path, SCREEN_HEIGHT, og_folder, dir_scroll=0, file_scroll=0):
     try:
@@ -91,13 +107,11 @@ def get_files(path, folder_type=False):
     ]
 
     if not(folder_type):
-        index = files.index(str(path).split("/")[-1])
+        index = 0
+        if oper == "windows":
+            index = files.index(str(path).split("\\")[-1])
+        else:
+            index = files.index(str(path).split("/")[-1])
         return files, index, str(folder_path)
     else:
         return files
-
-
-
-
-
-
