@@ -190,6 +190,10 @@ dragging = False
 
 running = True
 
+playing_song = "None"
+playing_text = font.render("", True, (255, 255, 255))
+playing_rect = playing_text.get_rect(center=((screen.get_width()-screen.get_width()/5)// 2+screen.get_width()/5, screen.get_height() // 2+render_size[1]/2+20))
+
 while running:
 
     mouse_pos = pygame.mouse.get_pos()
@@ -214,17 +218,40 @@ while running:
         text_surface = font.render(button[1], True, (255, 255, 255))
         screen.blit(text_surface, (10, button[0]+5))
 
+    try:
+        # Draw scrollbars
+        dir_max_scroll = max(0, len(DIRECTORY_ONLY) * 40 - (screen.get_height()/2 - 60))
+        if dir_max_scroll > 0:
+            scrollbar_h = (screen.get_height()/2 - 60) * (screen.get_height()/2 - 60) / (len(DIRECTORY_ONLY) * 40)
+            scrollbar_y = dir_scroll_offset * (screen.get_height()/2 - 60) / (len(DIRECTORY_ONLY) * 40)
+            pygame.draw.rect(screen, (100, 100, 100), 
+                            (screen.get_width()/5 - 10, scrollbar_y, 8, scrollbar_h))
+
+        file_max_scroll = max(0, len(FILES_ONLY) * 40 - (screen.get_height()/2 - 60))
+        if file_max_scroll > 0:
+            scrollbar_h = (screen.get_height()/2 - 60) * (screen.get_height()/2 - 60) / (len(FILES_ONLY) * 40)
+            scrollbar_y = file_scroll_offset * (screen.get_height()/2 - 60) / (len(FILES_ONLY) * 40)
+            pygame.draw.rect(screen, (100, 100, 100), 
+                            (screen.get_width()/5 - 10, screen.get_height()/2 + scrollbar_y, 8, scrollbar_h))
+    except:
+        print("Not enough space to draw scrollbars")
+
     pygame.draw.rect(screen, (20, 20, 20), (screen.get_width()/5, 0, screen.get_width()-screen.get_width()/5, screen.get_height()))  # Main background for album cover and visualizer
 
     if render_path != album_cover[1]:
-        print("Updating album cover...")
         album_cover[0] = pygame.image.load(render_path)
         album_cover[1] = render_path
         album_cover_rect = album_cover[0].get_rect()
         album_cover_rect.center = (screen.get_width()/5 + (screen.get_width()-screen.get_width()/5)/2, screen.get_height()/2)
-        print(album_cover)
 
     screen.blit(album_cover[0], album_cover_rect)
+
+    if playing_song != player.playing_song:
+        playing_song = player.playing_song
+        playing_text = font.render(player.playing_song, True, (255, 255, 255))
+        playing_rect = playing_text.get_rect(center=((screen.get_width()-screen.get_width()/5)// 2+screen.get_width()/5, screen.get_height() // 2+render_size[1]/2+20))
+
+    screen.blit(playing_text, playing_rect)
 
     if button_images[0][1] != play_pause_button_path:
         button_images[0][0] = pygame.image.load(play_pause_button_path)
@@ -252,7 +279,6 @@ while running:
                                                 int((screen.get_height()/2)+(render_size[1]/2)))
     except:
         pass
-
 
 
     pygame.display.flip()
@@ -384,7 +410,9 @@ while running:
 
                 dragging = True
 
-        # if event.type == pygame.MOUSEBUTTONUP:
+        if event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 1:
+                dragging = False
 
         if event.type == pygame.WINDOWRESIZED:
             volume.resize()
@@ -394,15 +422,22 @@ while running:
             play_pause_button.center = ((screen.get_width()-screen.get_width()/5)/2+screen.get_width()/5, screen.get_height() - 50)
             shuffle_button.topleft = ((screen.get_width()-screen.get_width()/5)/2-135+screen.get_width()/5, screen.get_height() - 50)
             previous_button.topleft = ((screen.get_width()-screen.get_width()/5)/2-80+screen.get_width()/5, screen.get_height() - 50)
+            render_size, render_path = album_handler.update_size()
+            album_cover[0] = pygame.image.load(render_path)
+            album_cover[1] = render_path
+            album_cover_rect = album_cover[0].get_rect()
+            album_cover_rect.center = (screen.get_width()/5 + (screen.get_width()-screen.get_width()/5)/2, screen.get_height()/2)
+            player.update_size(render_size)
+            playing_song = ""
 
         if event.type == pygame.MOUSEWHEEL:
             if mouse_pos[0] <= screen.get_width()/5:  # Only scroll if mouse is within the directory/file section
                 if mouse_pos[1] < screen.get_height()/2:  # Directory section
-                    dir_scroll_offset -= event.y * 4  # Scroll by item height
+                    dir_scroll_offset -= event.y * 8  # Scroll by item height
                     dir_scroll_offset = max(0, min(dir_scroll_offset, 
                                                    max(0, len(DIRECTORY_ONLY) * 40 - (screen.get_height()/2 - 60))))
                 else:  # File section
-                    file_scroll_offset -= event.y * 4
+                    file_scroll_offset -= event.y * 8
                     file_scroll_offset = max(0, min(file_scroll_offset,
                                                     max(0, len(FILES_ONLY) * 40 - (screen.get_height()/2 - 60))))
                     
