@@ -16,12 +16,8 @@ from get_files import get_music_files_and_directories
 from get_metadata import image_get
 from get_metadata import get_artist
 from wave_renderer import WaveVisualizer 
-from queue_handler import shuffler
-from queue_handler import generated_unshuffled_queue
 from get_files import get_drives
 from Song_Bar import SongBar
-from input_handler import previous
-from input_handler import skip
 from input_handler import Inputs
 from volume_worker import volume_manager
 import time
@@ -115,6 +111,8 @@ if not os.path.exists(folder_path):
 class DriveSwitch:
     def __init__(self, og):
         self.index = 0
+        if oper == "mac":
+            self.index = DRIVES.index(Path("/Volumes/Macintosh HD"))
         self.defualt = og[1:]
         self.defualt2 = "/music"
     
@@ -126,27 +124,30 @@ class DriveSwitch:
             self.index = 0
 
         if os.path.exists(str(DRIVES[self.index])+ self.defualt):
-            if oper == "mac":
-                return self.defualt
-            else:
-                return str(DRIVES[self.index]) + self.defualt
+            return str(DRIVES[self.index]) + self.defualt
             
         elif oper == "mac" and str(DRIVES[self.index]) == "/Volumes/Macintosh HD":
-                return self.defualt
+                return user_music_dir()
             
         elif os.path.exists(str(DRIVES[self.index])+ self.defualt2):
             return str(DRIVES[self.index])+ self.defualt2
         else:
             return DRIVES[self.index]
 
+print(folder_path)
+
 drive_handler = DriveSwitch(folder_path)
 
+print("Drives found:", DRIVES)
+
 DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, og_folder = get_music_files_and_directories(folder_path, screen.get_height(), folder_path)
+
+current_dir = og_folder
 
 # set up class instances
 image_handler = image_get(screen, 720)
 player = Inputs(folder_path)
-# player.queue = FILES_ONLY.copy()
+player.queue = FILES_ONLY.copy()
 
 # Scroll state variables
 dir_scroll_offset = 0  # Vertical offset for directories
@@ -178,28 +179,32 @@ play_pause_button = button_images[0][0].get_rect()
 play_pause_button.center = ((screen.get_width()-screen.get_width()/5)/2+screen.get_width()/5, screen.get_height() - 50)
 shuffle_button = pygame.Rect((screen.get_width()-screen.get_width()/5)/2-135+screen.get_width()/5, screen.get_height() - 50, 50, 20)
 previous_button = pygame.Rect((screen.get_width()-screen.get_width()/5)/2-80+screen.get_width()/5, screen.get_height() - 50, 50, 20)
-drive_prev_button = pygame.Rect((screen.get_width()/5 + 10), (screen.get_width()/19), 25, 40)
+drive_prev_button = pygame.Rect((screen.get_width()/5 + 10), (screen.get_height()/60), 25, 40)
 back_button = pygame.Rect(screen.get_width()/5-40, 5, 20, 20)
-
-song_length_bar = None
 volume = volume_manager(screen, default_screen_size[0], default_screen_size[1])
 album_handler = image_get(screen, 640)
 visualizer = None
+
+song_length_bar = SongBar(0, 0, screen.get_width(), screen.get_height(), screen, None)
 
 dragging = False
 
 running = True
 
 playing_song = "None"
-playing_text = font.render("", True, (255, 255, 255))
+playing_text = font.render(playing_song, True, (255, 255, 255))
 playing_rect = playing_text.get_rect(center=((screen.get_width()-screen.get_width()/5)// 2+screen.get_width()/5, screen.get_height() // 2+render_size[1]/2+20))
+
+artist = "Unknown Artist"
+artist_text = font.render(artist, True, (255, 255, 255))
+artist_rect = artist_text.get_rect(center=((screen.get_width()-screen.get_width()/5)// 2+screen.get_width()/5, screen.get_height() // 2+render_size[1]/2+50))
 
 while running:
 
     mouse_pos = pygame.mouse.get_pos()
 
     if not(pygame.mixer_music.get_busy()) and player.playing:
-        player.next()
+        player.next(bar = song_length_bar)
         render_size, render_path = album_handler.update_image(os.path.join(player.currently_dir, player.queue[player.index]))
 
     # draw background and UI elements
@@ -250,8 +255,12 @@ while running:
         playing_song = player.playing_song
         playing_text = font.render(player.playing_song, True, (255, 255, 255))
         playing_rect = playing_text.get_rect(center=((screen.get_width()-screen.get_width()/5)// 2+screen.get_width()/5, screen.get_height() // 2+render_size[1]/2+20))
+        artist = get_artist(os.path.join(player.currently_dir, player.queue[player.index])) if player.playing_song != "None" and player.playing_song != "" else "Unknown Artist"
+        artist_text = font.render(artist, True, (255, 255, 255))
+        artist_rect = artist_text.get_rect(center=((screen.get_width()-screen.get_width()/5)// 2+screen.get_width()/5, screen.get_height() // 2+render_size[1]/2+50))
 
     screen.blit(playing_text, playing_rect)
+    screen.blit(artist_text, artist_rect)
 
     if button_images[0][1] != play_pause_button_path:
         button_images[0][0] = pygame.image.load(play_pause_button_path)
@@ -265,6 +274,8 @@ while running:
     pygame.draw.rect(screen, back_button_color, back_button)
 
     volume.draw()
+
+    song_length_bar.update(current_length=player.visulizer.get_position() if player.visulizer else 0)
 
     try:
         if visualizer != None:
@@ -337,16 +348,22 @@ while running:
             if dragging:
                 volume.adjust_volume(mouse_pos)
                 if song_length_bar:
-                    song_length_bar.update_position(mouse_pos)
+                    song_length_bar.adjust_time(mouse_pos)
 
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
                 mouse_pos = event.pos
+                if song_length_bar:
+                    song_length_bar.adjust_time(mouse_pos)
 
                 if skip_button.collidepoint(mouse_pos):
-                    visualizer = player.next()
-                    render_size, render_path = album_handler.update_image(os.path.join(player.currently_dir, player.queue[player.index]))
+                    visualizer = player.next(song_length_bar)
+                    if visualizer:
+                        render_size, render_path = album_handler.update_image(os.path.join(player.currently_dir, player.queue[player.index]))
+                    else:
+                        render_size, render_path = album_handler.update_image()
+                        play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")
 
                 if play_pause_button.collidepoint(mouse_pos):
                     if player.playing_song != "None" and player.playing_song != "":
@@ -356,10 +373,18 @@ while running:
                         else:
                             play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play_hover.jpg")
                     else:
-                        visualizer = player.play()
+                        player.currently_dir = current_dir
+                        DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, og_folder = get_music_files_and_directories(player.currently_dir, screen.get_height(), og_folder)
+                        player.unshuffled = FILES_ONLY.copy()
+                        player.queue = FILES_ONLY.copy()
+                        if player.shuffled:
+                            player.shuffled = False
+                            player.shuffle()
+                        visualizer = player.play(bar = song_length_bar)
                         if player.playing:
                             play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause_hover.jpg")
-                        render_size, render_path = album_handler.update_image(os.path.join(player.currently_dir, player.queue[player.index]))
+                        if visualizer:
+                            render_size, render_path = album_handler.update_image(os.path.join(player.currently_dir, player.queue[player.index]))
                         
 
                 if shuffle_button.collidepoint(mouse_pos):
@@ -370,40 +395,44 @@ while running:
                     player.shuffle()
 
                 if previous_button.collidepoint(mouse_pos):
-                    visualizer = player.previous()
-                    render_size, render_path = album_handler.update_image(os.path.join(player.currently_dir, player.queue[player.index]))
+                    visualizer = player.previous(song_length_bar)
+                    if visualizer:
+                        render_size, render_path = album_handler.update_image(os.path.join(player.currently_dir, player.queue[player.index]))
 
                 if drive_prev_button.collidepoint(mouse_pos):
                     DRIVES = get_drives(oper)
                     new_folder = drive_handler.switchDrive(-1)
                     DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, og_folder = get_music_files_and_directories(new_folder, screen.get_height(), og_folder)
-                    # if not(player.playing) and (player.playing_song == "None" or player.playing_song == ""):
-                    #     player.queue = FILES_ONLY.copy()
-                    #     player.currently_dir = new_folder
+                    current_dir = og_folder
+                    if not(player.playing) and (player.playing_song == "None" or player.playing_song == ""):
+                        player.queue = FILES_ONLY.copy()
+                        player.currently_dir = current_dir
 
                 if back_button.collidepoint(mouse_pos):
                     new_folder = Path(og_folder).parent
                     DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, og_folder = get_music_files_and_directories(new_folder, screen.get_height(), og_folder)
-                    # if not(player.playing) and (player.playing_song == "None" or player.playing_song == ""):
-                    #     player.queue = FILES_ONLY.copy()
-                    #     player.currently_dir = new_folder
+                    current_dir = og_folder
+                    if not(player.playing) and (player.playing_song == "None" or player.playing_song == ""):
+                        player.queue = FILES_ONLY.copy()
+                        player.currently_dir = current_dir
 
                 for button in directory_buttons:
                     button_rect = pygame.Rect(0, button[0], screen.get_width()/5, 40)
                     if button_rect.collidepoint(mouse_pos):
                         new_folder = os.path.join(og_folder, button[1])
                         DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, og_folder = get_music_files_and_directories(new_folder, screen.get_height(), og_folder)
-                        if not(player.playing) and (player.playing_song == "None" or player.playing_song == ""):
+                        if (player.playing_song == "None" or player.playing_song == ""):
                             player.queue = FILES_ONLY.copy()
-                            player.currently_dir = new_folder
+                            current_dir = og_folder
+                        else:
+                            current_dir = og_folder
 
                 for button in file_buttons:
                     button_rect = pygame.Rect(0, button[0], screen.get_width()/5, 40)
                     if button_rect.collidepoint(mouse_pos):
+                        visualizer = player.play(os.path.join(current_dir, button[1]), bar = song_length_bar)
                         render_size, render_path = album_handler.update_size()
-                        render_size, render_path = album_handler.update_image(os.path.join(player.currently_dir, button[1]))
-                        player.update_size(render_size)
-                        visualizer = player.play(os.path.join(player.currently_dir, button[1]), player.currently_dir)  
+                        render_size, render_path = album_handler.update_image(os.path.join(current_dir, button[1]))  
                         play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")
 
                 volume.adjust_volume(mouse_pos)
@@ -416,7 +445,7 @@ while running:
 
         if event.type == pygame.WINDOWRESIZED:
             volume.resize()
-            drive_prev_button.topleft = (screen.get_width()/5 + 10, (screen.get_width()/19))
+            drive_prev_button.topleft = (screen.get_width()/5 + 10, (screen.get_height()/60))
             back_button.topleft = (screen.get_width()/5-40, 5)
             skip_button.topleft = ((screen.get_width()-screen.get_width()/5)/2+30+screen.get_width()/5, screen.get_height() - 50)
             play_pause_button.center = ((screen.get_width()-screen.get_width()/5)/2+screen.get_width()/5, screen.get_height() - 50)
@@ -429,6 +458,7 @@ while running:
             album_cover_rect.center = (screen.get_width()/5 + (screen.get_width()-screen.get_width()/5)/2, screen.get_height()/2)
             player.update_size(render_size)
             playing_song = ""
+            song_length_bar.resize(screen.get_width(), screen.get_height())
 
         if event.type == pygame.MOUSEWHEEL:
             if mouse_pos[0] <= screen.get_width()/5:  # Only scroll if mouse is within the directory/file section
@@ -442,6 +472,28 @@ while running:
                                                     max(0, len(FILES_ONLY) * 40 - (screen.get_height()/2 - 60))))
                     
                 DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, og_folder = get_music_files_and_directories(og_folder, screen.get_height(), og_folder, dir_scroll_offset, file_scroll_offset)
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                if player.playing_song != "None" and player.playing_song != "":
+                    player.pause()
+                    if player.playing:
+                        play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")
+                    else:
+                        play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")
+                else:
+                    player.currently_dir = current_dir
+                    DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, og_folder = get_music_files_and_directories(player.currently_dir, screen.get_height(), og_folder)
+                    player.unshuffled = FILES_ONLY.copy()
+                    player.queue = FILES_ONLY.copy()
+                    if player.shuffled:
+                        player.shuffled = False
+                        player.shuffle()
+                    visualizer = player.pause(bar = song_length_bar)
+                    if player.playing:
+                        play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause_hover.jpg")
+                    if visualizer:
+                        render_size, render_path = album_handler.update_image(os.path.join(player.currently_dir, player.queue[player.index]))
 
 shutil.rmtree(os.path.join(os.path.dirname(__file__), "main_cover_art/"))
 sys.exit()

@@ -4,7 +4,7 @@ from get_files import get_files
 shuffled_queue = []
 
 def shuffler(queue, current_song, first=False):
-    queue_copy = queue.copy()
+    queue_copy =queue.copy()
     runA = len(queue)
     if first:
         shuffled_queue = [current_song]
