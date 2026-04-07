@@ -15,13 +15,10 @@ from pathlib import Path
 from get_files import get_music_files_and_directories
 from get_metadata import image_get
 from get_metadata import get_artist
-from wave_renderer import WaveVisualizer 
 from get_files import get_drives
 from Song_Bar import SongBar
 from input_handler import Inputs
 from volume_worker import volume_manager
-import time
-import random
 import shutil
 
 # Get monitor information and extract screen dimensions
@@ -113,6 +110,8 @@ class DriveSwitch:
         self.index = 0
         if oper == "mac":
             self.index = DRIVES.index(Path("/Volumes/Macintosh HD"))
+        if oper == "windows":
+            self.index = DRIVES.index(Path(folder_path).drive)
         self.defualt = og[1:]
         self.defualt2 = "/music"
     
@@ -133,8 +132,6 @@ class DriveSwitch:
             return str(DRIVES[self.index])+ self.defualt2
         else:
             return DRIVES[self.index]
-
-print(folder_path)
 
 drive_handler = DriveSwitch(folder_path)
 
@@ -204,7 +201,7 @@ while running:
     mouse_pos = pygame.mouse.get_pos()
 
     if not(pygame.mixer_music.get_busy()) and player.playing:
-        player.next(bar = song_length_bar)
+        visualizer = player.next(bar = song_length_bar)
         render_size, render_path = album_handler.update_image(os.path.join(player.currently_dir, player.queue[player.index]))
 
     # draw background and UI elements
@@ -258,6 +255,8 @@ while running:
         artist = get_artist(os.path.join(player.currently_dir, player.queue[player.index])) if player.playing_song != "None" and player.playing_song != "" else "Unknown Artist"
         artist_text = font.render(artist, True, (255, 255, 255))
         artist_rect = artist_text.get_rect(center=((screen.get_width()-screen.get_width()/5)// 2+screen.get_width()/5, screen.get_height() // 2+render_size[1]/2+50))
+        if visualizer:
+            visualizer.set_color_from_image(render_path)
 
     screen.blit(playing_text, playing_rect)
     screen.blit(artist_text, artist_rect)
