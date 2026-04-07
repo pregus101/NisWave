@@ -16,7 +16,7 @@ class Inputs:
         self.playing_song = "None"
         self.playing = False
         self.shuffled = False
-        self.visulizer = None
+        self.visualizer = None
         self.currently_dir = current_dir
         self.index = 0
         self.render = [720, 720]
@@ -32,61 +32,61 @@ class Inputs:
                     self.queue = self.unshuffled.copy()
     
     def next(self, bar=None):
-        if self.visulizer:
+        if self.visualizer:
             if self.index + 1 >= len(self.queue):
                 self.index = 0
                 self.playing = False
                 self.playing_song = "None"
-                self.visulizer.set_pause_state(True)
-                self.visulizer = None
+                self.visualizer.set_pause_state(True)
+                self.visualizer = None
                 if bar: 
                     bar.total_length = 0
                     bar.visualizer = None
 
             else:
                 self.index += 1
-                self.visulizer = WaveVisualizer(os.path.join(self.currently_dir, self.queue[self.index]),
+                self.visualizer = WaveVisualizer(os.path.join(self.currently_dir, self.queue[self.index]),
                                                         self.render[0],
                                                         self.render[1])
-                self.visulizer.load_audio()
-                self.visulizer.play()
+                self.visualizer.load_audio()
+                self.visualizer.play()
                 self.playing = True 
                 self.playing_song = self.queue[self.index].split("/")[-1][:-4]
                 if bar:
                     bar.total_length = pygame.mixer.Sound(os.path.join(self.currently_dir, self.queue[self.index])).get_length()
-                    bar.visualizer = self.visulizer
-            return self.visulizer
+                    bar.visualizer = self.visualizer
+            return self.visualizer
 
     def pause(self, bar=None):
-        if self.visulizer:
+        if self.visualizer:
             self.playing = not(self.playing)
-            self.visulizer.toggle_pause()
+            self.visualizer.toggle_pause()
         elif bar:
             self.play(bar=bar)
         else:
             self.play()
 
     def previous(self, bar=None):
-        if self.visulizer:
-            if self.visulizer.get_position() >= 3.5:
-                self.visulizer.set_position(0)
+        if self.visualizer:
+            if self.visualizer.get_position() >= 3.5:
+                self.visualizer.set_position(0)
                 self.playing = True
                 self.playing_song = self.queue[self.index].split("/")[-1][:-4]
             else:
                 if self.index - 1 >= 0:
                     self.index -= 1
-                    self.visulizer = WaveVisualizer(os.path.join(self.currently_dir, self.queue[self.index]),
+                    self.visualizer = WaveVisualizer(os.path.join(self.currently_dir, self.queue[self.index]),
                                                     self.render[0],
                                                     self.render[1])
-                    self.visulizer.load_audio()
-                    self.visulizer.play()
+                    self.visualizer.load_audio()
+                    self.visualizer.play()
                     self.playing = True
                     self.playing_song = self.queue[self.index].split("/")[-1][:-4]
                     if bar:
                         bar.total_length = pygame.mixer.Sound(os.path.join(self.currently_dir, self.queue[self.index])).get_length()
-                        bar.visualizer = self.visulizer
+                        bar.visualizer = self.visualizer
 
-            return self.visulizer
+            return self.visualizer
 
     def play(self, path=None, current_dir=None, bar=None):
         if path != None:
@@ -96,35 +96,35 @@ class Inputs:
             else:
                 self.queue = new_shuffler(self.index, self.unshuffled)
 
-            self.visulizer = WaveVisualizer(os.path.join(self.currently_dir, self.queue[self.index]),
+            self.visualizer = WaveVisualizer(os.path.join(self.currently_dir, self.queue[self.index]),
                                             self.render[0],
                                             self.render[1])
-            self.visulizer.load_audio()
-            self.visulizer.play()
+            self.visualizer.load_audio()
+            self.visualizer.play()
             self.playing = True
             self.playing_song = self.queue[self.index].split("/")[-1][:-4]
             if bar:
                 bar.total_length = pygame.mixer.Sound(os.path.join(self.currently_dir, self.queue[self.index])).get_length()
-                bar.visualizer = self.visulizer
+                bar.visualizer = self.visualizer
 
-            return self.visulizer
+            return self.visualizer
         
         elif self.queue:
             if not(self.shuffled):
                 self.index = 0
-            self.visulizer = WaveVisualizer(os.path.join(self.currently_dir, self.queue[self.index]),
+            self.visualizer = WaveVisualizer(os.path.join(self.currently_dir, self.queue[self.index]),
                                             self.render[0],
                                             self.render[1])
-            self.visulizer.load_audio()
-            self.visulizer.play()
+            self.visualizer.load_audio()
+            self.visualizer.play()
             self.playing = True
             self.playing_song = self.queue[self.index].split("/")[-1][:-4]
 
-            if bar and self.visulizer != None:
+            if bar and self.visualizer != None:
                 bar.total_length = pygame.mixer.Sound(os.path.join(self.currently_dir, self.queue[self.index])).get_length()
-                bar.visualizer = self.visulizer
+                bar.visualizer = self.visualizer
 
-            return self.visulizer
+            return self.visualizer
         else:
             self.playing = False
             self.playing_song = "None"

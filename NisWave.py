@@ -270,7 +270,7 @@ while running:
 
     volume.draw()
 
-    song_length_bar.update(current_length=player.visulizer.get_position() if player.visulizer else 0)
+    song_length_bar.update(current_length=player.visualizer.get_position() if player.visualizer else 0)
 
     try:
         if visualizer != None:
