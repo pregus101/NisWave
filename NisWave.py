@@ -111,7 +111,7 @@ class DriveSwitch:
         if oper == "mac":
             self.index = DRIVES.index(Path("/Volumes/Macintosh HD"))
         if oper == "windows":
-            self.index = DRIVES.index(Path(folder_path).drive)
+            self.index = DRIVES.index(Path(folder_path).drive+"\\")
         self.defualt = og[1:]
         self.defualt2 = "/music"
     
