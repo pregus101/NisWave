@@ -2,7 +2,7 @@ import pygame
 
 class SongBar:
     
-    def __init__(self, total_length, current_length, screen_width, screen_height, screen, visualizer, song="", artist=""):
+    def __init__(self, total_length, current_length, screen_width, screen_height, screen, visualizer):
         self.total_length = total_length
         self.current_length = current_length
         self.screen_width = screen_width

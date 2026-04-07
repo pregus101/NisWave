@@ -86,7 +86,7 @@ else:
     # print("Unknown OS")
     oper = "default"
 
-DRIVES = get_drives(oper)
+DRIVES = get_drives()
 
 multi_drives = False
 if len(DRIVES) > 1:
@@ -399,7 +399,7 @@ while running:
                         render_size, render_path = album_handler.update_image(os.path.join(player.currently_dir, player.queue[player.index]))
 
                 if drive_prev_button.collidepoint(mouse_pos):
-                    DRIVES = get_drives(oper)
+                    DRIVES = get_drives()
                     new_folder = drive_handler.switchDrive(-1)
                     DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, og_folder = get_music_files_and_directories(new_folder, screen.get_height(), og_folder)
                     current_dir = og_folder
