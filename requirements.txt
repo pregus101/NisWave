@@ -1,4 +1,4 @@
-pygame
+pygame>=2.6.1 
 screeninfo>=0.8.0
 platformdirs>=4.0.0
 librosa>=0.10.0

@@ -22,20 +22,10 @@ from volume_worker import volume_manager
 import shutil
 
 # Get monitor information and extract screen dimensions
-monitors = str(get_monitors())
-temp = monitors.split("[Monitor(x=0, y=0, width=")
-temp = temp[1].split("height=")
-temp = temp[0] + temp[1]
-temp = temp.split(", width_mm=")
-temp = temp[0]
-temp = temp.split(", ")
+primary_monitor = [mon for mon in get_monitors() if mon.is_primary][0]    
 
-# Extract and store screen dimensions
-default_screen_size = []
-for i in range(0, len(temp)):
-    default_screen_size.append(int(temp[i]))
-screen = None
-screen = pygame.display.set_mode((default_screen_size[0], default_screen_size[1]), pygame.RESIZABLE)
+# Set default screen size to primary monitor dimensions
+screen = pygame.display.set_mode((primary_monitor.width, primary_monitor.height), pygame.RESIZABLE)
 pygame.display.set_caption("pregus101's NisWave app")
 
 # Set up media inputs
@@ -155,6 +145,7 @@ render_size, render_path = image_handler.default_cover("")
 
 button_images = []
 button_images.append([pygame.image.load(os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")), os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")])
+button_images.append([pygame.image.load(os.path.join(os.path.dirname(__file__), "assets/shuffle_unshuffled.jpg")), os.path.join(os.path.dirname(__file__), "assets/shuffle_unshuffled.jpg")])
 album_cover = [pygame.image.load(render_path), render_path]
 album_cover_rect = album_cover[0].get_rect()
 album_cover_rect.center = (screen.get_width()/5 + (screen.get_width()-screen.get_width()/5)/2, screen.get_height()/2)
@@ -167,18 +158,19 @@ FPS = 20
 skip_button_color = (64, 64, 64)  # Default gray for skip button
 play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")  # Default image for play/pause button
 back_button_color = (64, 64, 64)  # Default gray for back button
-shuffle_button_color = (64, 64, 64)  # Default gray for shuffle button
+shuffle_button_path = os.path.join(os.path.dirname(__file__), "assets/shuffle_unshuffled.jpg")  # Default image for shuffle button
 previous_button_color = (64, 64, 64)  # Default gray for previous button
 drive_prev_color = (64, 64, 64)  # Default gray for drive previous button
 
 skip_button = pygame.Rect((screen.get_width()-screen.get_width()/5)/2+30+screen.get_width()/5, screen.get_height() - 50, 50, 20)
 play_pause_button = button_images[0][0].get_rect()
 play_pause_button.center = ((screen.get_width()-screen.get_width()/5)/2+screen.get_width()/5, screen.get_height() - 50)
-shuffle_button = pygame.Rect((screen.get_width()-screen.get_width()/5)/2-135+screen.get_width()/5, screen.get_height() - 50, 50, 20)
+shuffle_button = button_images[1][0].get_rect()
+shuffle_button.center = ((screen.get_width()-screen.get_width()/5)/2-135+screen.get_width()/5+25, screen.get_height() - 50)
 previous_button = pygame.Rect((screen.get_width()-screen.get_width()/5)/2-80+screen.get_width()/5, screen.get_height() - 50, 50, 20)
 drive_prev_button = pygame.Rect((screen.get_width()/5 + 10), (screen.get_height()/60), 25, 40)
 back_button = pygame.Rect(screen.get_width()/5-40, 5, 20, 20)
-volume = volume_manager(screen, default_screen_size[0], default_screen_size[1])
+volume = volume_manager(screen, primary_monitor.width, primary_monitor.height)
 album_handler = image_get(screen, 640)
 visualizer = None
 
@@ -265,9 +257,13 @@ while running:
         button_images[0][0] = pygame.image.load(play_pause_button_path)
         button_images[0][1] = play_pause_button_path
 
+    if button_images[1][1] != shuffle_button_path:
+        button_images[1][0] = pygame.image.load(shuffle_button_path)
+        button_images[1][1] = shuffle_button_path
+
     screen.blit(button_images[0][0], play_pause_button)
+    screen.blit(button_images[1][0], shuffle_button)
     pygame.draw.rect(screen, skip_button_color, skip_button)
-    pygame.draw.rect(screen, shuffle_button_color, shuffle_button)
     pygame.draw.rect(screen, previous_button_color, previous_button)
     pygame.draw.rect(screen, drive_prev_color, drive_prev_button)
     pygame.draw.rect(screen, back_button_color, back_button)
@@ -320,14 +316,14 @@ while running:
 
             if shuffle_button.collidepoint(mouse_pos):
                 if player.shuffled:
-                    shuffle_button_color = (64, 255, 64) 
+                    shuffle_button_path = os.path.join(os.path.dirname(__file__), "assets/shuffle_shuffled_hover.jpg")  # Highlight shuffled image on hover
                 else:
-                    shuffle_button_color = (128, 128, 128)
+                    shuffle_button_path = os.path.join(os.path.dirname(__file__), "assets/shuffle_unshuffled_hover.jpg")
             else:
                 if player.shuffled:
-                    shuffle_button_color = (64, 128, 64)
+                    shuffle_button_path = os.path.join(os.path.dirname(__file__), "assets/shuffle_shuffled.jpg")
                 else:
-                    shuffle_button_color = (64, 64, 64)  # Default color
+                    shuffle_button_path = os.path.join(os.path.dirname(__file__), "assets/shuffle_unshuffled.jpg")  # Default image
 
             if previous_button.collidepoint(mouse_pos):
                 previous_button_color = (128, 128, 128)  # Highlight previous button on hover
@@ -388,9 +384,9 @@ while running:
 
                 if shuffle_button.collidepoint(mouse_pos):
                     if player.shuffled:
-                        shuffle_button_color = (128, 128, 128)
+                        shuffle_button_path = os.path.join(os.path.dirname(__file__), "assets/shuffle_unshuffled_hover.jpg")
                     else:
-                        shuffle_button_color = (64, 255, 64)
+                        shuffle_button_path = os.path.join(os.path.dirname(__file__), "assets/shuffle_shuffled_hover.jpg")
                     player.shuffle()
 
                 if previous_button.collidepoint(mouse_pos):
@@ -448,7 +444,7 @@ while running:
             back_button.topleft = (screen.get_width()/5-40, 5)
             skip_button.topleft = ((screen.get_width()-screen.get_width()/5)/2+30+screen.get_width()/5, screen.get_height() - 50)
             play_pause_button.center = ((screen.get_width()-screen.get_width()/5)/2+screen.get_width()/5, screen.get_height() - 50)
-            shuffle_button.topleft = ((screen.get_width()-screen.get_width()/5)/2-135+screen.get_width()/5, screen.get_height() - 50)
+            shuffle_button.center = ((screen.get_width()-screen.get_width()/5)/2-135+screen.get_width()/5+25, screen.get_height() - 50)
             previous_button.topleft = ((screen.get_width()-screen.get_width()/5)/2-80+screen.get_width()/5, screen.get_height() - 50)
             render_size, render_path = album_handler.update_size()
             album_cover[0] = pygame.image.load(render_path)
@@ -496,4 +492,3 @@ while running:
 
 shutil.rmtree(os.path.join(os.path.dirname(__file__), "main_cover_art/"))
 sys.exit()
-
