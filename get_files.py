@@ -30,7 +30,7 @@ def get_music_files_and_directories(folder_path, SCREEN_HEIGHT, og_folder, dir_s
             if -30 < y_pos < SCREEN_HEIGHT/2:  # Only include visible items
                 directory_buttons.append([y_pos, directory])
                 
-        supported_formats = ['.mp3', '.wav', '.flac', '.aac', '.ogg'] #, '.m4a']
+        supported_formats = ['.mp3', '.wav', '.flac', '.aac', '.ogg', '.m4a']
         FILES_ONLY = [
             entry for entry in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, entry)) and os.path.splitext(entry)[1].lower() in supported_formats and not(entry[0] == ".")
         ]
@@ -60,7 +60,7 @@ def get_music_files_and_directories(folder_path, SCREEN_HEIGHT, og_folder, dir_s
             if -30 < y_pos < SCREEN_HEIGHT/2:  # Only include visible items
                 directory_buttons.append([y_pos, directory])
 
-        supported_formats = ['.mp3', '.wav', '.flac', '.aac', '.ogg'] #, '.m4a']
+        supported_formats = ['.mp3', '.wav', '.flac', '.aac', '.ogg', '.m4a']
         FILES_ONLY = [
             entry for entry in os.listdir(og_folder) if os.path.isfile(os.path.join(og_folder, entry)) and os.path.splitext(entry)[1].lower() in supported_formats and not(entry[0] == ".")
         ]
@@ -96,7 +96,7 @@ def get_files(path, folder_type=False):
     else:
         folder_path = Path(path).parent
 
-    supported_formats = ['.mp3', '.wav', '.flac', '.aac', '.ogg'] #, '.m4a']
+    supported_formats = ['.mp3', '.wav', '.flac', '.aac', '.ogg', '.m4a']
 
     files = [
         entry for entry in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, entry)) and os.path.splitext(entry)[1].lower() in supported_formats and not(entry[0] == ".")

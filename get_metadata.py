@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from mutagen.mp3 import MP3
+from mutagen.mp4 import MP4
 from mutagen.id3 import ID3, APIC
 from mutagen.easyid3 import EasyID3
 from PIL import Image
@@ -61,12 +62,33 @@ class image_get:
             skip = False
             
             if Path(file_path).is_file():
-                file = MutagenFile(file_path)
+                if file_path.lower().endswith('.m4a'):
+                    file = MP4(file_path)
+                else:
+                    file = MutagenFile(file_path)
             else:
                 skip = True
                 file = None
 
             if file and file.tags and not skip:
+                if file_path.lower().endswith('.m4a'):
+                    if 'covr' in file.tags:
+                        image_data = file.tags["covr"][0]
+                        
+                        track_title = os.path.basename(file_path)[:-4]
+                        return_path = os.path.join(os.path.dirname(__file__), f"main_cover_art/{track_title.replace('/', '_')}_{self.typeOf}.png")
+
+                        with open(return_path, "wb") as f:
+                            f.write(image_data)
+                        print("Image extracted successfully.")
+
+                        renSize = reSize(return_path, self.size)
+
+                        self.old_image = return_path
+
+                        self.file_path = file_path
+
+                        return renSize, return_path
                 try:
                     for tag in file.tags.getall('APIC'):
                         print("debug3")
@@ -118,7 +140,11 @@ class image_get:
 def get_artist(mp3_file_path):
     # Load the MP3 file with mutagen
     try:
-        audio = EasyID3(mp3_file_path)
-        return audio.get('artist', ['Unknown Artist'])[0]
+        if mp3_file_path.lower().endswith('.m4a'):
+            audio = MP4(mp3_file_path)
+            return audio.tags.get('\xa9ART', ['Unknown Artist'])[0]
+        else:
+            audio = EasyID3(mp3_file_path)
+            return audio.get('artist', ['Unknown Artist'])[0]
     except:
         return 'Unknown Artist'

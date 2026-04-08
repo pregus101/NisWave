@@ -3,6 +3,7 @@ import numpy as np
 from scipy.fft import fft
 import pygame
 import subprocess
+import tempfile
 import urllib.request
 from urllib.parse import urlparse, parse_qs
 from youtubesearchpython import VideosSearch
@@ -99,6 +100,9 @@ class WaveVisualizer:
         self.start_time = 0
         self.pause_time = 0
         self.paused_elapsed_seconds = 0
+
+        # Temp file for m4a conversion
+        self.temp_file = None
         
         # Button configuration
         self.button_width = 120
@@ -372,7 +376,19 @@ class WaveVisualizer:
         try:
             with self._instance_lock:
                 if self.audio_data is not None:
-                    pygame.mixer.music.load(self.file_path)
+                    play_path = self.file_path
+                    if self.file_path.lower().endswith('.m4a') or self.file_path.lower().endswith('.mp3'):
+                        tmp = tempfile.NamedTemporaryFile(suffix='.wav', delete=False)
+                        tmp.close()
+                        subprocess.run(
+                            ['ffmpeg', '-y', '-i', self.file_path, tmp.name],
+                            capture_output=True
+                        )
+                        if self.temp_file and os.path.exists(self.temp_file):
+                            os.remove(self.temp_file)
+                        self.temp_file = tmp.name
+                        play_path = tmp.name
+                    pygame.mixer.music.load(play_path)
                     pygame.mixer.music.play()
                     self.start_time = pygame.time.get_ticks()
                     self.is_paused = False
@@ -380,6 +396,12 @@ class WaveVisualizer:
         except Exception as e:
             print(f"Error playing audio: {e}")
         return False
+
+    def cleanup(self):
+        """Remove any temp files created for m4a conversion."""
+        if self.temp_file and os.path.exists(self.temp_file):
+            os.remove(self.temp_file)
+            self.temp_file = None
 
 
 # =============================================================================

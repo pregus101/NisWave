@@ -210,7 +210,9 @@ while running:
     for button in file_buttons:
         button_rect = pygame.Rect(0, button[0], screen.get_width()/5, 40)
         pygame.draw.rect(screen, (40, 40, 40), button_rect)
-        text_surface = font.render(button[1], True, (255, 255, 255))
+        if player.playing_song != button[1][:-4]:
+             text_surface = font.render(button[1], True, (255, 255, 255))
+        else:             text_surface = font.render(button[1], True, (64, 255, 64))  # Highlight currently playing song in red
         screen.blit(text_surface, (10, button[0]+5))
 
     try:

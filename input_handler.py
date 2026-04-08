@@ -53,7 +53,7 @@ class Inputs:
                 self.playing = True 
                 self.playing_song = self.queue[self.index].split("/")[-1][:-4]
                 if bar:
-                    bar.total_length = pygame.mixer.Sound(os.path.join(self.currently_dir, self.queue[self.index])).get_length()
+                    bar.total_length = self.visualizer.audio_duration
                     bar.visualizer = self.visualizer
             return self.visualizer
 
@@ -83,7 +83,7 @@ class Inputs:
                     self.playing = True
                     self.playing_song = self.queue[self.index].split("/")[-1][:-4]
                     if bar:
-                        bar.total_length = pygame.mixer.Sound(os.path.join(self.currently_dir, self.queue[self.index])).get_length()
+                        bar.total_length = self.visualizer.audio_duration
                         bar.visualizer = self.visualizer
 
             return self.visualizer
@@ -104,7 +104,7 @@ class Inputs:
             self.playing = True
             self.playing_song = self.queue[self.index].split("/")[-1][:-4]
             if bar:
-                bar.total_length = pygame.mixer.Sound(os.path.join(self.currently_dir, self.queue[self.index])).get_length()
+                bar.total_length = self.visualizer.audio_duration
                 bar.visualizer = self.visualizer
 
             return self.visualizer
@@ -121,7 +121,7 @@ class Inputs:
             self.playing_song = self.queue[self.index].split("/")[-1][:-4]
 
             if bar and self.visualizer != None:
-                bar.total_length = pygame.mixer.Sound(os.path.join(self.currently_dir, self.queue[self.index])).get_length()
+                bar.total_length = self.visualizer.audio_duration
                 bar.visualizer = self.visualizer
 
             return self.visualizer
