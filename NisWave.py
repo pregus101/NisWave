@@ -16,6 +16,7 @@ from get_files import get_music_files_and_directories
 from get_metadata import image_get
 from get_metadata import get_artist
 from get_files import get_drives
+from get_files import scroll_files_and_directories
 from Song_Bar import SongBar
 from input_handler import Inputs
 from volume_worker import volume_manager
@@ -27,30 +28,6 @@ primary_monitor = [mon for mon in get_monitors() if mon.is_primary][0]
 # Set default screen size to primary monitor dimensions
 screen = pygame.display.set_mode((primary_monitor.width, primary_monitor.height), pygame.RESIZABLE)
 pygame.display.set_caption("pregus101's NisWave app")
-
-# Set up media inputs
-global media_input
-media_input = []
-data_lock = threading.Lock()
-
-def on_press(key):
-    global media_input
-    with data_lock:
-        media_input.append(key)
-
-def listening():
-    # Start the listener
-    # The listener runs in a separate thread, use .join() to prevent the script from exiting immediately
-    with Listener(on_press=on_press) as listener:
-        listener.join()
-
-listener_thread = threading.Thread(target=listening)
-listener_thread.daemon = True  # Make it a daemon thread so it exits when main thread exits
-# listener_thread.start()
-
-# Set up button rate limit
-last_button_press_time = 0
-button_press_cooldown = 0.5  # Cooldown time in seconds
 
 # Initialize Pygame and font
 pygame.init()
@@ -130,6 +107,32 @@ drive_handler = DriveSwitch(folder_path)
 
 print("Drives found:", DRIVES)
 
+# Set up media inputs
+global media_input
+media_input = []
+data_lock = threading.Lock()
+
+def on_press(key):
+    global media_input
+    with data_lock:
+        media_input.append(key)
+
+def listening():
+    # Start the listener
+    # The listener runs in a separate thread, use .join() to prevent the script from exiting immediately
+    with Listener(on_press=on_press) as listener:
+        listener.join()
+
+listener_thread = threading.Thread(target=listening)
+listener_thread.daemon = True  # Make it a daemon thread so it exits when main thread exits
+if oper == "windows" or oper == "linux":
+    listener_thread.start()
+
+
+# Set up button rate limit
+last_button_press_time = 0
+button_press_cooldown = 0.5  # Cooldown time in seconds
+
 DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, og_folder = get_music_files_and_directories(folder_path, screen.get_height(), folder_path)
 
 current_dir = og_folder
@@ -142,6 +145,12 @@ player.queue = FILES_ONLY.copy()
 # Scroll state variables
 dir_scroll_offset = 0  # Vertical offset for directories
 file_scroll_offset = 0  # Vertical offset for files
+dir_scroll_speed = 20  # Speed of scrolling for directories
+file_scroll_speed = 20  # Speed of scrolling for files
+dir_scoll_decay = 2  # Decay rate for directory scroll inertia
+file_scroll_decay = 2  # Decay rate for file scroll inertia
+dir_scroll_velocity = 0  # Current velocity for directory scrolling
+file_scroll_velocity = 0  # Current velocity for file scrolling
 
 image_handler.update_size()
 render_size, render_path = image_handler.default_cover("")
@@ -202,6 +211,26 @@ while running:
     # draw background and UI elements
     pygame.draw.rect(screen, (40, 40, 40), (0, 0, screen.get_width()/5, screen.get_height()/2))
     pygame.draw.rect(screen, (40, 40, 40), (0, screen.get_height()/2, screen.get_width()/5, screen.get_height()/2)) 
+
+    if dir_scroll_velocity != 0:
+        dir_scroll_offset += dir_scroll_velocity
+        dir_scroll_velocity *= (1 - dir_scoll_decay / 40)  # Apply decay to the velocity
+        if abs(dir_scroll_velocity) < 0.1:  # Stop scrolling when velocity is low
+            dir_scroll_velocity = 0
+
+        dir_scroll_offset = max(0, min(dir_scroll_offset, max(0, len(DIRECTORY_ONLY) * 40 - (screen.get_height()/2 - 60))))  # Clamp to valid scroll range
+
+        directory_buttons, file_buttons = scroll_files_and_directories(dir_scroll_offset, file_scroll_offset, directory_buttons, file_buttons, screen.get_height(), DIRECTORY_ONLY, FILES_ONLY)
+        
+    if file_scroll_velocity != 0:
+        file_scroll_offset += file_scroll_velocity
+        file_scroll_velocity *= (1 - file_scroll_decay / 20)  # Apply decay to the velocity
+        if abs(file_scroll_velocity) < 0.1:  # Stop scrolling when velocity is low
+            file_scroll_velocity = 0
+
+        file_scroll_offset = max(0, min(file_scroll_offset, max(0, len(FILES_ONLY) * 40 - (screen.get_height()/2 - 60))))  # Clamp to valid scroll range
+        
+        directory_buttons, file_buttons = scroll_files_and_directories(dir_scroll_offset, file_scroll_offset, directory_buttons, file_buttons, screen.get_height(), DIRECTORY_ONLY, FILES_ONLY)
 
     for button in directory_buttons:
         button_rect = pygame.Rect(0, button[0], screen.get_width()/5, 40)
@@ -466,13 +495,13 @@ while running:
                     dir_scroll_offset -= event.y * 8  # Scroll by item height
                     dir_scroll_offset = max(0, min(dir_scroll_offset, 
                                                    max(0, len(DIRECTORY_ONLY) * 40 - (screen.get_height()/2 - 60))))
+                    dir_scroll_velocity = -event.y * 8  # Set velocity for inertia effect
                 else:  # File section
                     file_scroll_offset -= event.y * 8
                     file_scroll_offset = max(0, min(file_scroll_offset,
                                                     max(0, len(FILES_ONLY) * 40 - (screen.get_height()/2 - 60))))
-                    
-                DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, og_folder = get_music_files_and_directories(og_folder, screen.get_height(), og_folder, dir_scroll_offset, file_scroll_offset)
 
+                    file_scroll_velocity = -event.y * 8  # Set velocity for inertia effect
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 if player.playing_song != "None" and player.playing_song != "":

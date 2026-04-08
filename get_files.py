@@ -104,6 +104,21 @@ def get_music_files_and_directories(folder_path, SCREEN_HEIGHT, og_folder, dir_s
 
         return DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, og_folder
     
+def scroll_files_and_directories(dir_scroll, file_scroll, directory_buttons, file_buttons, SCREEN_HEIGHT, directories_only, files_only):
+    directory_buttons = []
+    for directory in directories_only:
+            y_pos = (directories_only.index(directory)+1)*40 + 10 - dir_scroll
+            if -30 < y_pos < SCREEN_HEIGHT/2:  # Only include visible items
+                directory_buttons.append([y_pos, directory])
+
+    file_buttons = []
+    for file in files_only:
+            y_pos = SCREEN_HEIGHT/2+(files_only.index(file)+1)*40 + 10 - file_scroll
+            if SCREEN_HEIGHT/2 - 30 < y_pos < SCREEN_HEIGHT:  # Only include visible items
+                file_buttons.append([y_pos, file])
+
+    return directory_buttons, file_buttons
+    
 def get_drives():
     if oper == "windows" or oper == "linux":
         partitions = psutil.disk_partitions(all=True)
