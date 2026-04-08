@@ -4,6 +4,34 @@ from pathlib import Path
 import psutil
 import pygame
 import sys
+import subprocess
+import shutil
+
+def is_ffmpeg_installed():
+    """
+    Checks if FFmpeg is installed and accessible in the system PATH.
+    Returns:
+        bool: True if installed, False otherwise.
+    """
+    if shutil.which("ffmpeg") is None:
+        return False
+
+    try:
+        result = subprocess.run(
+            ["ffmpeg", "-version"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        return result.returncode == 0
+    except (FileNotFoundError, subprocess.SubprocessError):
+        return False
+    
+supported_formats = ['.mp3', '.wav', '.flac', '.aac', '.ogg']
+
+if is_ffmpeg_installed():
+    supported_formats.append("m4a")
+
 
 oper = ""
 # Get other drives
@@ -30,7 +58,6 @@ def get_music_files_and_directories(folder_path, SCREEN_HEIGHT, og_folder, dir_s
             if -30 < y_pos < SCREEN_HEIGHT/2:  # Only include visible items
                 directory_buttons.append([y_pos, directory])
                 
-        supported_formats = ['.mp3', '.wav', '.flac', '.aac', '.ogg', '.m4a']
         FILES_ONLY = [
             entry for entry in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, entry)) and os.path.splitext(entry)[1].lower() in supported_formats and not(entry[0] == ".")
         ]
@@ -62,7 +89,6 @@ def get_music_files_and_directories(folder_path, SCREEN_HEIGHT, og_folder, dir_s
             if -30 < y_pos < SCREEN_HEIGHT/2:  # Only include visible items
                 directory_buttons.append([y_pos, directory])
 
-        supported_formats = ['.mp3', '.wav', '.flac', '.aac', '.ogg', '.m4a']
         FILES_ONLY = [
             entry for entry in os.listdir(og_folder) if os.path.isfile(os.path.join(og_folder, entry)) and os.path.splitext(entry)[1].lower() in supported_formats and not(entry[0] == ".")
         ]
@@ -100,7 +126,7 @@ def get_files(path, folder_type=False):
     else:
         folder_path = Path(path).parent
 
-    supported_formats = ['.mp3', '.wav', '.flac', '.aac', '.ogg', '.m4a']
+    
 
     files = [
         entry for entry in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, entry)) and os.path.splitext(entry)[1].lower() in supported_formats and not(entry[0] == ".")

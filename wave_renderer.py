@@ -377,7 +377,7 @@ class WaveVisualizer:
             with self._instance_lock:
                 if self.audio_data is not None:
                     play_path = self.file_path
-                    if self.file_path.lower().endswith('.m4a') or self.file_path.lower().endswith('.mp3'):
+                    if self.file_path.lower().endswith('.m4a'):
                         tmp = tempfile.NamedTemporaryFile(suffix='.wav', delete=False)
                         tmp.close()
                         subprocess.run(
