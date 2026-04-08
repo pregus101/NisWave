@@ -64,13 +64,16 @@ class image_get:
             if Path(file_path).is_file():
                 if file_path.lower().endswith('.m4a'):
                     file = MP4(file_path)
-                else:
+                elif file_path.lower().endswith('.mp3'):
                     file = MutagenFile(file_path)
+                else:
+                    skip = True
+                    file = None
             else:
                 skip = True
                 file = None
 
-            if file and file.tags and not skip:
+            if not skip and file and file.tags:
                 if file_path.lower().endswith('.m4a'):
                     if 'covr' in file.tags:
                         image_data = file.tags["covr"][0]
