@@ -17,6 +17,7 @@ from get_metadata import image_get
 from get_metadata import get_artist
 from get_files import get_drives
 from get_files import scroll_files_and_directories
+from get_files import search
 from Song_Bar import SongBar
 from input_handler import Inputs
 from volume_worker import volume_manager
@@ -182,9 +183,15 @@ shuffle_button.center = ((screen.get_width()-screen.get_width()/5)/2-135+screen.
 previous_button = pygame.Rect((screen.get_width()-screen.get_width()/5)/2-80+screen.get_width()/5, screen.get_height() - 50, 50, 20)
 drive_prev_button = pygame.Rect((screen.get_width()/5 + 10), (screen.get_height()/60), 25, 40)
 back_button = pygame.Rect(screen.get_width()/5-40, 5, 20, 20)
+
+typing_box = pygame.Rect(screen.get_width()/5+10, screen.get_height()/60+50, 200, 40)
+
 volume = volume_manager(screen, primary_monitor.width, primary_monitor.height)
 album_handler = image_get(screen, 640)
 visualizer = None
+
+typing = False
+search_query = ""
 
 song_length_bar = SongBar(0, 0, screen.get_width(), screen.get_height(), screen, None)
 
@@ -302,6 +309,12 @@ while running:
     pygame.draw.rect(screen, drive_prev_color, drive_prev_button)
     pygame.draw.rect(screen, back_button_color, back_button)
 
+    pygame.draw.rect(screen, (40, 40, 40), typing_box)
+    if search_query != "":
+        search_text = font.render(search_query, True, (255, 255, 255))
+        search_rect = search_text.get_rect(topleft=(typing_box.x + 5, typing_box.y + 5))
+        screen.blit(search_text, search_rect)
+
     volume.draw()
 
     song_length_bar.update(current_length=player.visualizer.get_position() if player.visualizer else 0)
@@ -385,6 +398,11 @@ while running:
                 mouse_pos = event.pos
                 if song_length_bar:
                     song_length_bar.adjust_time(mouse_pos)
+
+                if typing_box.collidepoint(mouse_pos):
+                    typing = True
+                else:
+                    typing = False
 
                 if skip_button.collidepoint(mouse_pos):
                     visualizer = player.next(song_length_bar)
@@ -503,7 +521,7 @@ while running:
 
                     file_scroll_velocity = -event.y * 8  # Set velocity for inertia effect
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
+            if event.key == pygame.K_SPACE and not typing:
                 if player.playing_song != "None" and player.playing_song != "":
                     player.pause()
                     if player.playing:
@@ -523,6 +541,32 @@ while running:
                         play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause_hover.jpg")
                     if visualizer:
                         render_size, render_path = album_handler.update_image(os.path.join(player.currently_dir, player.queue[player.index]))
+
+            else:
+                if event.key == pygame.K_BACKSPACE and typing:
+                    search_query = search_query[:-1]
+                    filtered_files = search(FILES_ONLY, search_query)
+                    file_buttons = [(screen.get_height()/2+(filtered_files.index(file)+1)*40, file) for i, file in enumerate(filtered_files)]
+                elif event.key == pygame.K_RETURN and typing:
+                    if len(file_buttons) > 0:
+                        selected_file = file_buttons[0][1]  # Get the first file in the filtered list
+                        visualizer = player.play(os.path.join(current_dir, selected_file), bar = song_length_bar)
+                        render_size, render_path = album_handler.update_size()
+                        render_size, render_path = album_handler.update_image(os.path.join(current_dir, selected_file))  
+                        play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")
+                        typing = False
+                        search_query = ""
+                        filtered_files = FILES_ONLY.copy()
+                        file_buttons = [(screen.get_height()/2+(filtered_files.index(file)+1)*40, file) for i, file in enumerate(filtered_files)]
+                elif event.key == pygame.K_ESCAPE and typing:
+                    typing = False
+                    search_query = ""
+                    filtered_files = FILES_ONLY.copy()
+                    file_buttons = [(screen.get_height()/2+(filtered_files.index(file)+1)*40, file) for i, file in enumerate(filtered_files)]
+                elif typing:
+                    search_query += event.unicode
+                    filtered_files = search(FILES_ONLY, search_query)
+                    file_buttons = [(screen.get_height()/2+(filtered_files.index(file)+1)*40, file) for i, file in enumerate(filtered_files)]
 
 shutil.rmtree(os.path.join(os.path.dirname(__file__), "main_cover_art/"))
 sys.exit()
