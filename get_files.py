@@ -35,6 +35,8 @@ def get_music_files_and_directories(folder_path, SCREEN_HEIGHT, og_folder, dir_s
             entry for entry in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, entry)) and os.path.splitext(entry)[1].lower() in supported_formats and not(entry[0] == ".")
         ]
 
+        FILES_ONLY.sort(key=lambda entry: os.path.getctime(os.path.join(folder_path, entry)))
+
         file_buttons = []
 
         for file in FILES_ONLY:
@@ -64,6 +66,8 @@ def get_music_files_and_directories(folder_path, SCREEN_HEIGHT, og_folder, dir_s
         FILES_ONLY = [
             entry for entry in os.listdir(og_folder) if os.path.isfile(os.path.join(og_folder, entry)) and os.path.splitext(entry)[1].lower() in supported_formats and not(entry[0] == ".")
         ]
+
+        FILES_ONLY.sort(key=lambda entry: os.path.getctime(os.path.join(og_folder, entry)))
 
         file_buttons = []
 
@@ -101,6 +105,8 @@ def get_files(path, folder_type=False):
     files = [
         entry for entry in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, entry)) and os.path.splitext(entry)[1].lower() in supported_formats and not(entry[0] == ".")
     ]
+
+    files.sort(key=lambda entry: os.path.getctime(os.path.join(folder_path, entry)))
 
     if not(folder_type):
         index = 0
