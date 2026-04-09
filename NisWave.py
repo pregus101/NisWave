@@ -18,6 +18,7 @@ from get_metadata import get_artist
 from get_files import get_drives
 from get_files import scroll_files_and_directories
 from get_files import search
+from get_files import find_offset_to_file
 from Song_Bar import SongBar
 from input_handler import Inputs
 from volume_worker import volume_manager
@@ -152,6 +153,7 @@ dir_scoll_decay = 2  # Decay rate for directory scroll inertia
 file_scroll_decay = 2  # Decay rate for file scroll inertia
 dir_scroll_velocity = 0  # Current velocity for directory scrolling
 file_scroll_velocity = 0  # Current velocity for file scrolling
+file_scroll_target = 0  # Target offset for file scrolling when clicking a file
 
 image_handler.update_size()
 render_size, render_path = image_handler.default_cover("")
@@ -229,15 +231,35 @@ while running:
 
         directory_buttons, file_buttons = scroll_files_and_directories(dir_scroll_offset, file_scroll_offset, directory_buttons, file_buttons, screen.get_height(), DIRECTORY_ONLY, FILES_ONLY)
         
+    # if file_scroll_velocity != 0:
+    #     file_scroll_offset += file_scroll_velocity
+    #     file_scroll_velocity *= (1 - file_scroll_decay / 20)  # Apply decay to the velocity
+    #     if abs(file_scroll_velocity) < 0.1:  # Stop scrolling when velocity is low
+    #         file_scroll_velocity = 0
+
+    #     file_scroll_offset = max(0, min(file_scroll_offset, max(0, len(FILES_ONLY) * 40 - (screen.get_height()/2 - 60))))  # Clamp to valid scroll range
+        
+    #     directory_buttons, file_buttons = scroll_files_and_directories(dir_scroll_offset, file_scroll_offset, directory_buttons, file_buttons, screen.get_height(), DIRECTORY_ONLY, FILES_ONLY)
+
+    lerp_speed = 0.4
+    
+    if abs(file_scroll_target - file_scroll_offset) > 0.5:
+        file_scroll_offset += (file_scroll_target - file_scroll_offset) * lerp_speed
+        # Update the button positions based on the new animated offset
+        directory_buttons, file_buttons = scroll_files_and_directories(
+            dir_scroll_offset, file_scroll_offset, directory_buttons, file_buttons, 
+            screen.get_height(), DIRECTORY_ONLY, FILES_ONLY
+        )
+    else:
+        file_scroll_offset = file_scroll_target
+
     if file_scroll_velocity != 0:
-        file_scroll_offset += file_scroll_velocity
-        file_scroll_velocity *= (1 - file_scroll_decay / 20)  # Apply decay to the velocity
-        if abs(file_scroll_velocity) < 0.1:  # Stop scrolling when velocity is low
+        file_scroll_target += file_scroll_velocity
+        file_scroll_velocity *= (1 - file_scroll_decay / 20)
+        if abs(file_scroll_velocity) < 0.1:
             file_scroll_velocity = 0
 
-        file_scroll_offset = max(0, min(file_scroll_offset, max(0, len(FILES_ONLY) * 40 - (screen.get_height()/2 - 60))))  # Clamp to valid scroll range
-        
-        directory_buttons, file_buttons = scroll_files_and_directories(dir_scroll_offset, file_scroll_offset, directory_buttons, file_buttons, screen.get_height(), DIRECTORY_ONLY, FILES_ONLY)
+        file_scroll_target = max(0, min(file_scroll_target, max(0, len(FILES_ONLY) * 40 - (screen.get_height()/2 - 60))))
 
     for button in directory_buttons:
         button_rect = pygame.Rect(0, button[0], screen.get_width()/5, 40)
@@ -310,10 +332,21 @@ while running:
     pygame.draw.rect(screen, back_button_color, back_button)
 
     pygame.draw.rect(screen, (40, 40, 40), typing_box)
-    if search_query != "":
+
+    if search_query != "" or typing:
         search_text = font.render(search_query, True, (255, 255, 255))
         search_rect = search_text.get_rect(topleft=(typing_box.x + 5, typing_box.y + 5))
+        if search_rect.width > typing_box.width - 10:  # If text is too wide, trim it
+            temp_query = search_query
+            while search_rect.width > typing_box.width - 10:  # If text is too wide, trim it
+                temp_query = temp_query[1:]
+                search_text = font.render(temp_query, True, (255, 255, 255))
+                search_rect = search_text.get_rect(topleft=(typing_box.x + 5, typing_box.y + 5))
         screen.blit(search_text, search_rect)
+    else:
+        hint_text = font.render("Search...", True, (100, 100, 100))
+        hint_rect = hint_text.get_rect(topleft=(typing_box.x + 5, typing_box.y + 5))
+        screen.blit(hint_text, hint_rect)
 
     volume.draw()
 
@@ -482,6 +515,13 @@ while running:
                         render_size, render_path = album_handler.update_image(os.path.join(current_dir, button[1]))  
                         play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")
 
+                        if search_query != "":
+                            search_query = ""
+                            filtered_files = FILES_ONLY.copy()
+                            file_buttons = [(screen.get_height()/2+(filtered_files.index(file)+1)*40, file) for i, file in enumerate(filtered_files)]
+
+                            file_scroll_target = find_offset_to_file(button[1], screen, FILES_ONLY)
+
                 volume.adjust_volume(mouse_pos)
 
                 dragging = True
@@ -510,16 +550,14 @@ while running:
         if event.type == pygame.MOUSEWHEEL:
             if mouse_pos[0] <= screen.get_width()/5:  # Only scroll if mouse is within the directory/file section
                 if mouse_pos[1] < screen.get_height()/2:  # Directory section
-                    dir_scroll_offset -= event.y * 8  # Scroll by item height
                     dir_scroll_offset = max(0, min(dir_scroll_offset, 
                                                    max(0, len(DIRECTORY_ONLY) * 40 - (screen.get_height()/2 - 60))))
-                    dir_scroll_velocity = -event.y * 8  # Set velocity for inertia effect
+                    dir_scroll_velocity = -event.y * 4  # Set velocity for inertia effect
                 else:  # File section
-                    file_scroll_offset -= event.y * 8
                     file_scroll_offset = max(0, min(file_scroll_offset,
                                                     max(0, len(FILES_ONLY) * 40 - (screen.get_height()/2 - 60))))
 
-                    file_scroll_velocity = -event.y * 8  # Set velocity for inertia effect
+                    file_scroll_velocity = -event.y * 4  # Set velocity for inertia effect
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE and not typing:
                 if player.playing_song != "None" and player.playing_song != "":
@@ -554,10 +592,15 @@ while running:
                         render_size, render_path = album_handler.update_size()
                         render_size, render_path = album_handler.update_image(os.path.join(current_dir, selected_file))  
                         play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")
+
                         typing = False
                         search_query = ""
-                        filtered_files = FILES_ONLY.copy()
-                        file_buttons = [(screen.get_height()/2+(filtered_files.index(file)+1)*40, file) for i, file in enumerate(filtered_files)]
+                        file_buttons = [(screen.get_height()/2+(FILES_ONLY.index(file)+1)*40, file) for i, file in enumerate(FILES_ONLY)]
+
+                        file_scroll_target = scroll_to_file(selected_file, screen, FILES_ONLY)
+
+
+                        
                 elif event.key == pygame.K_ESCAPE and typing:
                     typing = False
                     search_query = ""
