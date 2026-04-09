@@ -176,6 +176,7 @@ back_button_color = (64, 64, 64)  # Default gray for back button
 shuffle_button_path = os.path.join(os.path.dirname(__file__), "assets/shuffle_unshuffled.jpg")  # Default image for shuffle button
 previous_button_color = (64, 64, 64)  # Default gray for previous button
 drive_prev_color = (64, 64, 64)  # Default gray for drive previous button
+jump_to_button_color = (64, 64, 64) # Default gray for the jump to button
 
 skip_button = pygame.Rect((screen.get_width()-screen.get_width()/5)/2+30+screen.get_width()/5, screen.get_height() - 50, 50, 20)
 play_pause_button = button_images[0][0].get_rect()
@@ -185,6 +186,7 @@ shuffle_button.center = ((screen.get_width()-screen.get_width()/5)/2-135+screen.
 previous_button = pygame.Rect((screen.get_width()-screen.get_width()/5)/2-80+screen.get_width()/5, screen.get_height() - 50, 50, 20)
 drive_prev_button = pygame.Rect((screen.get_width()/5 + 10), (screen.get_height()/60), 25, 40)
 back_button = pygame.Rect(screen.get_width()/5-40, 5, 20, 20)
+jump_to_button = pygame.Rect(screen.get_width()/5+20, screen.get_height()-50, 50, 20)
 
 typing_box = pygame.Rect(screen.get_width()/5+10, screen.get_height()/60+50, 200, 40)
 
@@ -330,6 +332,7 @@ while running:
     pygame.draw.rect(screen, previous_button_color, previous_button)
     pygame.draw.rect(screen, drive_prev_color, drive_prev_button)
     pygame.draw.rect(screen, back_button_color, back_button)
+    pygame.draw.rect(screen, jump_to_button_color, jump_to_button)
 
     pygame.draw.rect(screen, (40, 40, 40), typing_box)
 
@@ -437,6 +440,10 @@ while running:
                 else:
                     typing = False
 
+                if jump_to_button.collidepoint(mouse_pos):
+                    if player.playing_song != "None" and player.playing_song != "":
+                        file_scroll_target = find_offset_to_file(player.playing_song, screen, FILES_ONLY)
+
                 if skip_button.collidepoint(mouse_pos):
                     visualizer = player.next(song_length_bar)
                     if visualizer:
@@ -538,6 +545,7 @@ while running:
             play_pause_button.center = ((screen.get_width()-screen.get_width()/5)/2+screen.get_width()/5, screen.get_height() - 50)
             shuffle_button.center = ((screen.get_width()-screen.get_width()/5)/2-135+screen.get_width()/5+25, screen.get_height() - 50)
             previous_button.topleft = ((screen.get_width()-screen.get_width()/5)/2-80+screen.get_width()/5, screen.get_height() - 50)
+            jump_to_button.topleft = (screen.get_width()/5+20, screen.get_height()-50, 50, 20)
             render_size, render_path = album_handler.update_size()
             album_cover[0] = pygame.image.load(render_path)
             album_cover[1] = render_path
@@ -610,6 +618,33 @@ while running:
                     search_query += event.unicode
                     filtered_files = search(FILES_ONLY, search_query)
                     file_buttons = [(screen.get_height()/2+(filtered_files.index(file)+1)*40, file) for i, file in enumerate(filtered_files)]
+                    
+    with data_lock:
+        input_key = media_input[0] if media_input else None
+        media_input = media_input[1:]
+
+    if input_key:
+        if input_key == Key.media_play_pause:
+            if player.playing_song != "None" and player.playing_song != "":
+                player.pause()
+                if player.playing:
+                    play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")
+                else:
+                    play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")
+            else:
+                player.currently_dir = current_dir
+                DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, og_folder = get_music_files_and_directories(player.currently_dir, screen.get_height(), og_folder)
+                player.unshuffled = FILES_ONLY.copy()
+                player.queue = FILES_ONLY.copy()
+                if player.shuffled:
+                    player.shuffled = False
+                    player.shuffle()
+                visualizer = player.play(bar = song_length_bar)
+                if player.playing:
+                    play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")
+                if visualizer:
+                    render_size, render_path = album_handler.update_image(os.path.join(player.currently_dir, player.queue[player.index]))
+
 
 shutil.rmtree(os.path.join(os.path.dirname(__file__), "main_cover_art/"))
 sys.exit()
