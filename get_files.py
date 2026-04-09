@@ -164,6 +164,7 @@ def search(files, query):
     return [file for file in files if query.lower() in file.lower()]
 
 def find_offset_to_file(selected_file, screen, FILES_ONLY):
+    selected_file = search(FILES_ONLY, selected_file)[0]
     song_index = FILES_ONLY.index(selected_file)
     target_y = song_index * 40
     list_view_height = (screen.get_height() / 2) - 60
