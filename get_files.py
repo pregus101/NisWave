@@ -104,14 +104,14 @@ def get_music_files_and_directories(folder_path: str, SCREEN_HEIGHT: int, og_fol
 
         return DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, og_folder
     
-def scroll_files_and_directories(dir_scroll: int, file_scroll: int, directory_buttons: list, file_buttons: list, SCREEN_HEIGHT: int, directories_only: list, files_only: list) -> tuple[list, list]:
-    directory_buttons = []
+def scroll_files_and_directories(dir_scroll: int, file_scroll: int, directory_buttons: list[int, str], file_buttons: list[int, str], SCREEN_HEIGHT: int, directories_only: list[str], files_only: list[str]) -> tuple[list, list]:
+    directory_buttons: list[int, str] = []
     for directory in directories_only:
             y_pos = (directories_only.index(directory)+1)*40 + 10 - dir_scroll
             if -30 < y_pos < SCREEN_HEIGHT/2:  # Only include visible items
                 directory_buttons.append([y_pos, directory])
 
-    file_buttons = []
+    file_buttons: list[int, str] = []
     for file in files_only:
             y_pos = SCREEN_HEIGHT/2+(files_only.index(file)+1)*40 + 10 - file_scroll
             if SCREEN_HEIGHT/2+20 < y_pos < SCREEN_HEIGHT:  # Only include visible items
@@ -134,7 +134,7 @@ def get_drives() -> list:
     
     return drives
     
-def get_files(path: str, folder_type: bool = False) -> list:
+def get_files(path: str, folder_type: bool = False) -> list[list[str], int, str] | list[str]:
     folder_path: str = ""
     if folder_type:
         folder_type = path

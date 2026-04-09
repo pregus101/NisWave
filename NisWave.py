@@ -186,7 +186,7 @@ drive_prev_button = pygame.Rect((screen.get_width()/5 + 10), (screen.get_height(
 back_button = pygame.Rect(screen.get_width()/5-40, 5, 20, 20)
 jump_to_button = pygame.Rect(screen.get_width()/5+20, screen.get_height()-50, 50, 20)
 
-typing_box = pygame.Rect(90, screen.get_height()/2, 270, 40)
+typing_box = pygame.Rect(90, screen.get_height()/2, 250*(screen.get_width()/1920), 40)
 
 volume = volume_manager(screen, primary_monitor.width, primary_monitor.height)
 album_handler = image_get(screen, 640)
