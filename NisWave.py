@@ -597,7 +597,7 @@ while running:
                         search_query = ""
                         file_buttons = [(screen.get_height()/2+(FILES_ONLY.index(file)+1)*40, file) for i, file in enumerate(FILES_ONLY)]
 
-                        file_scroll_target = scroll_to_file(selected_file, screen, FILES_ONLY)
+                        file_scroll_target = find_offset_to_file(selected_file, screen, FILES_ONLY)
 
 
                         
