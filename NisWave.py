@@ -65,7 +65,7 @@ if len(DRIVES) > 1:
 
 if not os.path.exists(folder_path):
     for drive in DRIVES:
-        new_folder = drive + folder_path[1:]
+        new_folder = drive + folder_path[3:]
         if os.path.exists(new_folder):
             og_folder = new_folder
             folder = new_folder
@@ -155,6 +155,9 @@ dir_scroll_velocity = 0  # Current velocity for directory scrolling
 file_scroll_velocity = 0  # Current velocity for file scrolling
 file_scroll_target = 0  # Target offset for file scrolling when clicking a file
 
+file_text = font.render("Files: ", True, (255, 255, 255))
+directory_text = font.render("Directories: ", True, (255, 255, 255))
+
 image_handler.update_size()
 render_size, render_path = image_handler.default_cover("")
 
@@ -188,7 +191,7 @@ drive_prev_button = pygame.Rect((screen.get_width()/5 + 10), (screen.get_height(
 back_button = pygame.Rect(screen.get_width()/5-40, 5, 20, 20)
 jump_to_button = pygame.Rect(screen.get_width()/5+20, screen.get_height()-50, 50, 20)
 
-typing_box = pygame.Rect(screen.get_width()/5+10, screen.get_height()/60+50, 200, 40)
+typing_box = pygame.Rect(90, screen.get_height()/2, 200, 40)
 
 volume = volume_manager(screen, primary_monitor.width, primary_monitor.height)
 album_handler = image_get(screen, 640)
@@ -277,6 +280,12 @@ while running:
         else:             text_surface = font.render(button[1], True, (64, 255, 64))  # Highlight currently playing song in red
         screen.blit(text_surface, (10, button[0]+5))
 
+    pygame.draw.rect(screen, (40, 40, 40), (0, 0, screen.get_width()/5, 40))
+    pygame.draw.rect(screen, (40, 40, 40), (0, screen.get_height()/2-40, screen.get_width()/5, 80))
+
+    screen.blit(directory_text, (10, 10))
+    screen.blit(file_text, (10, screen.get_height()/2))
+
     try:
         # Draw scrollbars
         dir_max_scroll = max(0, len(DIRECTORY_ONLY) * 40 - (screen.get_height()/2 - 60))
@@ -334,7 +343,7 @@ while running:
     pygame.draw.rect(screen, back_button_color, back_button)
     pygame.draw.rect(screen, jump_to_button_color, jump_to_button)
 
-    pygame.draw.rect(screen, (40, 40, 40), typing_box)
+    pygame.draw.rect(screen, (20, 20, 20), typing_box)
 
     if search_query != "" or typing:
         search_text = font.render(search_query, True, (255, 255, 255))
@@ -348,7 +357,7 @@ while running:
         screen.blit(search_text, search_rect)
     else:
         hint_text = font.render("Search...", True, (100, 100, 100))
-        hint_rect = hint_text.get_rect(topleft=(typing_box.x + 5, typing_box.y + 5))
+        hint_rect = hint_text.get_rect(topleft=(typing_box.x + 5, typing_box.y))
         screen.blit(hint_text, hint_rect)
 
     volume.draw()
@@ -547,6 +556,7 @@ while running:
             previous_button.topleft = ((screen.get_width()-screen.get_width()/5)/2-80+screen.get_width()/5, screen.get_height() - 50)
             jump_to_button.topleft = (screen.get_width()/5+20, screen.get_height()-50)
             render_size, render_path = album_handler.update_size()
+            typing_box.topleft = (90, screen.get_height()/2)
             album_cover[0] = pygame.image.load(render_path)
             album_cover[1] = render_path
             album_cover_rect = album_cover[0].get_rect()

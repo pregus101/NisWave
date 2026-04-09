@@ -30,8 +30,9 @@ def is_ffmpeg_installed():
 supported_formats = ['.mp3', '.wav', '.flac', '.aac', '.ogg']
 
 if is_ffmpeg_installed():
-    supported_formats.append("m4a")
+    supported_formats.append(".m4a")
 
+print(supported_formats)
 
 oper = ""
 # Get other drives
@@ -164,12 +165,15 @@ def search(files, query):
     return [file for file in files if query.lower() in file.lower()]
 
 def find_offset_to_file(selected_file, screen, FILES_ONLY):
-    selected_file = search(FILES_ONLY, selected_file)[0]
-    song_index = FILES_ONLY.index(selected_file)
-    target_y = song_index * 40
-    list_view_height = (screen.get_height() / 2) - 60
+    try:
+        selected_file = search(FILES_ONLY, selected_file)[0]
+        song_index = FILES_ONLY.index(selected_file)
+        target_y = song_index * 40
+        list_view_height = (screen.get_height() / 2) - 60
 
-    file_scroll_target = target_y
+        file_scroll_target = target_y
 
-    max_scroll = max(0, len(FILES_ONLY) * 40 - list_view_height)
-    return max(0, min(file_scroll_target, max_scroll))
+        max_scroll = max(0, len(FILES_ONLY) * 40 - list_view_height)
+        return max(0, min(file_scroll_target, max_scroll))
+    except:
+        return 0
