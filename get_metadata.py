@@ -65,7 +65,11 @@ class image_get:
                 if file_path.lower().endswith('.m4a'):
                     file = MP4(file_path)
                 elif file_path.lower().endswith('.mp3'):
-                    file = MutagenFile(file_path)
+                    try:
+                        file = MutagenFile(file_path)
+                    except:
+                        skip = True
+                        file = None
                 else:
                     skip = True
                     file = None

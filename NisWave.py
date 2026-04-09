@@ -545,7 +545,7 @@ while running:
             play_pause_button.center = ((screen.get_width()-screen.get_width()/5)/2+screen.get_width()/5, screen.get_height() - 50)
             shuffle_button.center = ((screen.get_width()-screen.get_width()/5)/2-135+screen.get_width()/5+25, screen.get_height() - 50)
             previous_button.topleft = ((screen.get_width()-screen.get_width()/5)/2-80+screen.get_width()/5, screen.get_height() - 50)
-            jump_to_button.topleft = (screen.get_width()/5+20, screen.get_height()-50, 50, 20)
+            jump_to_button.topleft = (screen.get_width()/5+20, screen.get_height()-50)
             render_size, render_path = album_handler.update_size()
             album_cover[0] = pygame.image.load(render_path)
             album_cover[1] = render_path
