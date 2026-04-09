@@ -1,6 +1,5 @@
 import pygame
 from wave_renderer import WaveVisualizer
-# from get_metadata import get_cover_art
 import os
 from wave_renderer import WaveVisualizer
 from get_files import get_files
@@ -10,28 +9,30 @@ screen = pygame.display.set_mode((400, 400), pygame.RESIZABLE)
 
 class Inputs:
 
-    def __init__(self, current_dir=""):
-        self.unshuffled = []
-        self.queue = []
-        self.playing_song = "None"
-        self.playing = False
-        self.shuffled = False
-        self.visualizer = None
-        self.currently_dir = current_dir
-        self.index = 0
-        self.render = [720, 720]
+    def __init__(self, current_dir: str = "") -> None:
+        self.unshuffled: list = []
+        self.queue: list = []
+        self.playing_song: str = "None"
+        self.playing: bool = False
+        self.shuffled: bool = False
+        self.visualizer: WaveVisualizer | None = None
+        self.currently_dir: str = current_dir
+        self.index: int = 0
+        self.render: list[int] = [720, 720]
 
-    def shuffle(self):
-        self.shuffled = not(self.shuffled)
+    def shuffle(self) -> None:
+        self.shuffled = not self.shuffled
         if self.shuffled:
             self.queue = new_shuffler(self.index, self.unshuffled)
-        else:
-            for i, song in enumerate(self.unshuffled):
-                if self.queue[self.index] == song:
-                    self.index = i
-                    self.queue = self.unshuffled.copy()
+            return None
+        
+        for i, song in enumerate(self.unshuffled):
+            if self.queue[self.index] == song:
+                self.index = i
+                self.queue = self.unshuffled.copy()
+        return None
     
-    def next(self, bar=None):
+    def next(self, bar: None | object = None) -> WaveVisualizer | None:
         if self.visualizer:
             if self.index + 1 >= len(self.queue):
                 self.index = 0
@@ -57,16 +58,18 @@ class Inputs:
                     bar.visualizer = self.visualizer
             return self.visualizer
 
-    def pause(self, bar=None):
+    def pause(self, bar: None | object = None) -> None:
         if self.visualizer:
-            self.playing = not(self.playing)
+            self.playing = not self.playing
             self.visualizer.toggle_pause()
         elif bar:
             self.play(bar=bar)
         else:
             self.play()
+        
+        return None
 
-    def previous(self, bar=None):
+    def previous(self, bar: None | object = None) -> WaveVisualizer | None:
         if self.visualizer:
             if self.visualizer.get_position() >= 3.5:
                 self.visualizer.set_position(0)
@@ -87,8 +90,9 @@ class Inputs:
                         bar.visualizer = self.visualizer
 
             return self.visualizer
+        return None
 
-    def play(self, path=None, current_dir=None, bar=None):
+    def play(self, path: None | str = None, current_dir: None | str = None, bar: None | object = None) -> WaveVisualizer | None:
         if path != None:
             self.unshuffled, self.index, self.currently_dir = get_files(path)
             if not(self.shuffled):
@@ -129,50 +133,7 @@ class Inputs:
             self.playing = False
             self.playing_song = "None"
 
-    def update_size(self, render):
+        return None
+
+    def update_size(self, render: list[int]) -> None:
         self.render = render
-
-# player = Inputs()
-
-# player.play("/Volumes/Samsung/Music/Breakcore for breakfast/【『機動戦士Gundam GQuuuuuuX』アニメMV】「水槽の街から」／照井順政, みきまりあ（NOMELON NOLEMON）.mp3")
-
-# clock = pygame.time.Clock()
-
-# pygame.font.init()
-# font = pygame.font.SysFont(os.path.join(os.path.dirname(__file__), "/assets/Cyberbit.ttf"), 30)
-
-# running = True
-
-# while running:
-
-#     clock.tick(5)
-
-
-#     if not(pygame.mixer_music.get_busy()) and player.playing:
-#         player.next()
-
-#     screen.fill((0, 0, 0))
-#     screen.blit(font.render(player.playing_song, True, (255, 255, 255)), (0, 0))
-#     screen.blit(font.render("Paused: " + str(not(player.playing)), True, (255, 255, 255)), (0, 20))    
-#     screen.blit(font.render("Shuffled: " + str(player.shuffled), True, (255, 255, 255)), (0, 40))    
-#     screen.blit(font.render("Index: " + str(player.index), True, (255, 255, 255)), (0, 60))    
-#     pygame.display.flip()
-
-#     for event in pygame.event.get():
-#         # Exit application when window is closed
-#         if event.type == pygame.QUIT:
-#             running = False
-#             pygame.quit()
-
-#         if event.type == pygame.KEYDOWN:
-#             if event.key == pygame.K_LEFT:
-#                 player.previous()
-
-#             if event.key == pygame.K_RIGHT:
-#                 player.next()
-
-#             if event.key == pygame.K_SPACE:
-#                 player.pause()
-
-#             if event.key == pygame.K_RETURN:
-#                 player.shuffle()

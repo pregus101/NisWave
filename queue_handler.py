@@ -1,8 +1,8 @@
 import random
 from get_files import get_files
 
-def new_shuffler(index, queue_defualt):
-    first_half = queue_defualt[:index+1]
-    second_half = queue_defualt[index+1:]
+def new_shuffler(index: int, queue_defualt: list[str]) -> list[str]:
+    first_half: list[str] = queue_defualt[:index+1]
+    second_half: list[str] = queue_defualt[index+1:]
     random.shuffle(second_half)
     return first_half + second_half

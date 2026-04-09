@@ -12,13 +12,8 @@ from screeninfo import get_monitors
 import sys
 from platformdirs import user_music_dir
 from pathlib import Path
-from get_files import get_music_files_and_directories
-from get_metadata import image_get
-from get_metadata import get_artist
-from get_files import get_drives
-from get_files import scroll_files_and_directories
-from get_files import search
-from get_files import find_offset_to_file
+from get_metadata import image_get, get_artist
+from get_files import get_drives, scroll_files_and_directories, search, find_offset_to_file, get_music_files_and_directories
 from Song_Bar import SongBar
 from input_handler import Inputs
 from volume_worker import volume_manager
@@ -191,7 +186,7 @@ drive_prev_button = pygame.Rect((screen.get_width()/5 + 10), (screen.get_height(
 back_button = pygame.Rect(screen.get_width()/5-40, 5, 20, 20)
 jump_to_button = pygame.Rect(screen.get_width()/5+20, screen.get_height()-50, 50, 20)
 
-typing_box = pygame.Rect(90, screen.get_height()/2, 200, 40)
+typing_box = pygame.Rect(90, screen.get_height()/2, 270, 40)
 
 volume = volume_manager(screen, primary_monitor.width, primary_monitor.height)
 album_handler = image_get(screen, 640)
