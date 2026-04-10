@@ -1,11 +1,8 @@
-import pygame
 from wave_renderer import WaveVisualizer
 import os
 from wave_renderer import WaveVisualizer
 from get_files import get_files
 from queue_handler import new_shuffler
-
-# screen = pygame.display.set_mode((400, 400), pygame.RESIZABLE)
 
 class Inputs:
 
@@ -41,8 +38,8 @@ class Inputs:
                 self.visualizer.set_pause_state(True)
                 self.visualizer = None
                 if bar: 
-                    bar.total_length = 0
-                    bar.visualizer = None
+                    bar.total_length = 0 # type: ignore
+                    bar.visualizer = None # type: ignore
 
             else:
                 self.index += 1
@@ -54,8 +51,8 @@ class Inputs:
                 self.playing = True 
                 self.playing_song = self.queue[self.index].split("/")[-1][:-4]
                 if bar:
-                    bar.total_length = self.visualizer.audio_duration
-                    bar.visualizer = self.visualizer
+                    bar.total_length = self.visualizer.audio_duration # type: ignore
+                    bar.visualizer = self.visualizer  # type: ignore
             return self.visualizer
 
     def pause(self, bar: None | object = None) -> None:
@@ -88,15 +85,15 @@ class Inputs:
                     self.playing = True
                     self.playing_song = self.queue[self.index].split("/")[-1][:-4]
                     if bar:
-                        bar.total_length = self.visualizer.audio_duration
-                        bar.visualizer = self.visualizer
+                        bar.total_length = self.visualizer.audio_duration # type: ignore
+                        bar.visualizer = self.visualizer  # type: ignore
 
             return self.visualizer
         return None
 
     def play(self, path: None | str = None, current_dir: None | str = None, bar: None | object = None) -> WaveVisualizer | None:
         if path != None:
-            self.unshuffled, self.index, self.currently_dir = get_files(path)
+            self.unshuffled, self.index, self.currently_dir = get_files(path) # type: ignore
             if not(self.shuffled):
                 self.queue = self.unshuffled.copy()
             else:
@@ -110,8 +107,8 @@ class Inputs:
             self.playing = True
             self.playing_song = self.queue[self.index].split("/")[-1][:-4]
             if bar:
-                bar.total_length = self.visualizer.audio_duration
-                bar.visualizer = self.visualizer
+                bar.total_length = self.visualizer.audio_duration # type: ignore
+                bar.visualizer = self.visualizer  # type: ignore
 
             return self.visualizer
         
@@ -126,9 +123,9 @@ class Inputs:
             self.playing = True
             self.playing_song = self.queue[self.index].split("/")[-1][:-4]
 
-            if bar and self.visualizer != None:
-                bar.total_length = self.visualizer.audio_duration
-                bar.visualizer = self.visualizer
+            if bar and self.visualizer != None: # type: ignore
+                bar.total_length = self.visualizer.audio_duration # type: ignore
+                bar.visualizer = self.visualizer  # type: ignore
 
             return self.visualizer
         else:

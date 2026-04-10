@@ -9,7 +9,7 @@ import pygame
 import shutil
 from mutagen import File as MutagenFile
 
-def reSize(path, size):
+def reSize(path, size) -> list[int]:
     img = Image.open(path)
 
     width, height = img.size
@@ -21,7 +21,7 @@ def reSize(path, size):
     return [int(width*(size/height)), size]
 
 class image_get:
-    def __init__(self, screen, size, output_dir=os.path.join(os.path.dirname(__file__), "main_cover_art/"), typeOf="cover"):
+    def __init__(self, screen, size, output_dir=os.path.join(os.path.dirname(__file__), "main_cover_art/"), typeOf="cover") -> None:
         self.screen = screen
         self.size = size
         self.output_dir = output_dir
@@ -33,7 +33,7 @@ class image_get:
         self.old_image = os.path.join(os.path.dirname(__file__), "main_cover_art/default_cover.jpg")
         self.file_path = os.path.join(os.path.dirname(__file__), "main_cover_art/default_cover.jpg")
 
-    def default_cover(self, file_path):
+    def default_cover(self, file_path) -> tuple[list[int], str]:
         if Path(self.old_image).is_file():
             os.remove(self.old_image)
 
