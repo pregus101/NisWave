@@ -51,7 +51,7 @@ else:
     # print("Unknown OS")
     oper = "default"
 
-DRIVES = get_drives()
+DRIVES: list[str] = get_drives()
 
 multi_drives = False
 if len(DRIVES) > 1:

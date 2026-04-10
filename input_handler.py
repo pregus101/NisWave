@@ -5,13 +5,13 @@ from wave_renderer import WaveVisualizer
 from get_files import get_files
 from queue_handler import new_shuffler
 
-screen = pygame.display.set_mode((400, 400), pygame.RESIZABLE)
+# screen = pygame.display.set_mode((400, 400), pygame.RESIZABLE)
 
 class Inputs:
 
     def __init__(self, current_dir: str = "") -> None:
-        self.unshuffled: list = []
-        self.queue: list = []
+        self.unshuffled: list[str] = []
+        self.queue: list[str] = []
         self.playing_song: str = "None"
         self.playing: bool = False
         self.shuffled: bool = False
@@ -73,8 +73,10 @@ class Inputs:
         if self.visualizer:
             if self.visualizer.get_position() >= 3.5:
                 self.visualizer.set_position(0)
-                self.playing = True
-                self.playing_song = self.queue[self.index].split("/")[-1][:-4]
+
+                if not self.playing:
+                    self.pause()
+
             else:
                 if self.index - 1 >= 0:
                     self.index -= 1
