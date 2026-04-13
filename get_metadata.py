@@ -1,13 +1,14 @@
 import os
 from pathlib import Path
-from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4
-from mutagen.id3 import ID3, APIC
+from mutagen.id3 import APIC
 from mutagen.easyid3 import EasyID3
+from mutagen.flac import FLAC
+from mutagen.wave import WAVE
 from PIL import Image
-import pygame
 import shutil
-from mutagen import File as MutagenFile
+from mutagen import File as MutagenFile, mp3
+from typing import Any
 
 def reSize(path, size) -> list[int]:
     img = Image.open(path)
@@ -64,18 +65,22 @@ class image_get:
             if Path(file_path).is_file():
                 if file_path.lower().endswith('.m4a'):
                     file = MP4(file_path)
+                
                 elif file_path.lower().endswith('.mp3'):
                     try:
                         file = MutagenFile(file_path)
                     except:
                         skip = True
                         file = None
+                elif file_path.lower().endswith('.flac'):
+                    file = FLAC(file_path)
                 else:
                     skip = True
                     file = None
             else:
                 skip = True
                 file = None
+
 
             if not skip and file and file.tags:
                 if file_path.lower().endswith('.m4a'):
@@ -96,6 +101,24 @@ class image_get:
                         self.file_path = file_path
 
                         return renSize, return_path
+                elif file_path.lower().endswith('.flac'):
+
+                    track_title = os.path.basename(file_path)[:-4]
+                    return_path = os.path.join(os.path.dirname(__file__), f"main_cover_art/{track_title.replace('/', '_')}_{self.typeOf}.png")
+                    
+                    for picture in file.pictures:
+                        with open(return_path, 'wb') as f:
+                            f.write(picture.data)
+                        print(f"Thumbnail saved: {picture.mime}")
+
+                    renSize = reSize(return_path, self.size)
+
+                    self.old_image = return_path
+
+                    self.file_path = file_path
+
+                    return renSize, return_path
+
                 try:
                     for tag in file.tags.getall('APIC'):
                         print("debug3")
@@ -144,14 +167,23 @@ class image_get:
 
         return render_size, cover_art_path
 
-def get_artist(mp3_file_path):
-    # Load the MP3 file with mutagen
+def get_artist(file_path: str) -> str:
+    # Load the file with mutagen
     try:
-        if mp3_file_path.lower().endswith('.m4a'):
-            audio = MP4(mp3_file_path)
+        if file_path.lower().endswith('.m4a'):
+            audio: Any = MP4(file_path)
             return audio.tags.get('\xa9ART', ['Unknown Artist'])[0]
-        else:
-            audio = EasyID3(mp3_file_path)
+        elif file_path.lower().endswith('.mp3'):
+            audio = EasyID3(file_path)
             return audio.get('artist', ['Unknown Artist'])[0]
+            print(">")
+        elif file_path.lower().endswith('.flac'):
+            print(file_path)
+            audio = FLAC(file_path)
+            return audio.get('artist', ['Unknown Artist'])[0]
+        elif file_path.lower().endswith('.wav'):
+            audio = WAVE(file_path)
+            artist = audio.get('artist', ['Unknown Artist'])[0]
+            return artist
     except:
         return 'Unknown Artist'

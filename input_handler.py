@@ -2,7 +2,7 @@ from wave_renderer import WaveVisualizer
 import os
 from wave_renderer import WaveVisualizer
 from get_files import get_files
-from queue_handler import new_shuffler
+from queue_handler import new_shuffler, on_play_shuffle
 
 class Inputs:
 
@@ -16,6 +16,7 @@ class Inputs:
         self.currently_dir: str = current_dir
         self.index: int = 0
         self.render: list[int] = [720, 720]
+        self.queue_add: int = 0
 
     def shuffle(self) -> None:
         self.shuffled = not self.shuffled
@@ -97,7 +98,8 @@ class Inputs:
             if not(self.shuffled):
                 self.queue = self.unshuffled.copy()
             else:
-                self.queue = new_shuffler(self.index, self.unshuffled)
+                self.index = 0
+                self.queue = on_play_shuffle(self.unshuffled, path.split("/")[-1][:-4])
 
             self.visualizer = WaveVisualizer(os.path.join(self.currently_dir, self.queue[self.index]),
                                             self.render[0],

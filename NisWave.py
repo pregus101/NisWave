@@ -19,6 +19,9 @@ from input_handler import Inputs
 from volume_worker import volume_manager
 import shutil
 
+from typing import Any
+
+
 # Get monitor information and extract screen dimensions
 primary_monitor = [mon for mon in get_monitors() if mon.is_primary][0]    
 
@@ -51,73 +54,72 @@ else:
     # print("Unknown OS")
     oper = "default"
 
-DRIVES: list[str] = get_drives()
+drives: list[Path] = get_drives()
 
 multi_drives = False
-if len(DRIVES) > 1:
+if len(drives) > 1:
     multi_drives = True
-    print(DRIVES)
+    print(drives)
 
 if not os.path.exists(folder_path):
-    for drive in DRIVES:
-        new_folder = drive + folder_path[3:]
+    for drive in drives:
+        new_folder: str = str(drive) + folder_path[3:]
         if os.path.exists(new_folder):
-            og_folder = new_folder
-            folder = new_folder
+            og_folder: str = new_folder
+            folder: str = new_folder
             break
     if not os.path.exists(folder_path):
-        new_folder = DRIVES[0]
+        new_folder = str(drives[0])
         og_folder = new_folder
         folder = new_folder
 
 class DriveSwitch:
-    def __init__(self, og):
-        self.index = 0
+    def __init__(self, og: str) -> None:
+        self.index: int = 0
         if oper == "mac":
-            self.index = DRIVES.index(Path("/Volumes/Macintosh HD"))
+            self.index = drives.index(Path("/Volumes/Macintosh HD"))
         if oper == "windows":
-            self.index = DRIVES.index(Path(folder_path).drive+"\\")
-            self.defualt = og[3:]
+            self.index = int(drives.index(Path(folder_path).drive+"\\")) # type: ignore
+            self.defualt: str = og[3:]
         else:
             self.defualt = og[1:]
         self.defualt2 = "/music"
     
-    def switchDrive(self, direction):
+    def switchDrive(self, direction: int) -> str:
         self.index += direction
         if self.index < 0:
-            self.index = len(DRIVES)-1
-        if self.index > len(DRIVES):
+            self.index = len(drives)-1
+        if self.index > len(drives):
             self.index = 0
 
-        if os.path.exists(str(DRIVES[self.index])+ self.defualt):
-            return str(DRIVES[self.index]) + self.defualt
+        if os.path.exists(str(drives[self.index])+ self.defualt):
+            return str(drives[self.index]) + self.defualt
             
-        elif oper == "mac" and str(DRIVES[self.index]) == "/Volumes/Macintosh HD":
+        elif oper == "mac" and str(drives[self.index]) == "/Volumes/Macintosh HD":
                 return user_music_dir()
             
-        elif os.path.exists(str(DRIVES[self.index])+ self.defualt2):
-            return str(DRIVES[self.index])+ self.defualt2
+        elif os.path.exists(str(drives[self.index])+ self.defualt2):
+            return str(drives[self.index])+ self.defualt2
         else:
-            return DRIVES[self.index]
+            return str(drives[self.index])
 
 drive_handler = DriveSwitch(folder_path)
 
-print("Drives found:", DRIVES)
+print("Drives found:", drives)
 
 # Set up media inputs
 global media_input
-media_input = []
-data_lock = threading.Lock()
+media_input: list[Any] = []
+data_lock: threading.Lock = threading.Lock()
 
-def on_press(key):
+def on_press(key: Any) -> None:
     global media_input
     with data_lock:
-        media_input.append(key)
+      
+        media_input.append(key) # type: ignore
 
 def listening():
-    # Start the listener
-    # The listener runs in a separate thread, use .join() to prevent the script from exiting immediately
-    with Listener(on_press=on_press) as listener:
+    with Listener(on_press=on_press) as listener: # type: ignore
         listener.join()
 
 listener_thread = threading.Thread(target=listening)
@@ -130,14 +132,14 @@ if oper == "windows" or oper == "linux":
 last_button_press_time = 0
 button_press_cooldown = 0.5  # Cooldown time in seconds
 
-DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, og_folder = get_music_files_and_directories(folder_path, screen.get_height(), folder_path)
+directory_only: list[str], files_only: list[str], directory_buttons: list[tuple[int, str]], file_buttons: list[tuple[int, str]], og_folder: str = get_music_files_and_directories(folder_path, screen.get_height(), folder_path)
 
 current_dir = og_folder
 
 # set up class instances
 image_handler = image_get(screen, 720)
 player = Inputs(folder_path)
-player.queue = FILES_ONLY.copy()
+player.queue = files_only.copy()
 
 # Scroll state variables
 dir_scroll_offset = 0  # Vertical offset for directories
@@ -156,7 +158,7 @@ directory_text = font.render("Directories: ", True, (255, 255, 255))
 image_handler.update_size()
 render_size, render_path = image_handler.default_cover("")
 
-button_images = []
+button_images: list[pygame.image] = []
 button_images.append([pygame.image.load(os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")), os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")])
 button_images.append([pygame.image.load(os.path.join(os.path.dirname(__file__), "assets/shuffle_unshuffled.jpg")), os.path.join(os.path.dirname(__file__), "assets/shuffle_unshuffled.jpg")])
 album_cover = [pygame.image.load(render_path), render_path]
@@ -227,9 +229,9 @@ while running:
         if abs(dir_scroll_velocity) < 0.1:  # Stop scrolling when velocity is low
             dir_scroll_velocity = 0
 
-        dir_scroll_offset = max(0, min(dir_scroll_offset, max(0, len(DIRECTORY_ONLY) * 40 - (screen.get_height()/2 - 60))))  # Clamp to valid scroll range
+        dir_scroll_offset = max(0, min(dir_scroll_offset, max(0, len(directory_only) * 40 - (screen.get_height()/2 - 60))))  # Clamp to valid scroll range
 
-        directory_buttons, file_buttons = scroll_files_and_directories(dir_scroll_offset, file_scroll_offset, directory_buttons, file_buttons, screen.get_height(), DIRECTORY_ONLY, FILES_ONLY)
+        directory_buttons, file_buttons = scroll_files_and_directories(dir_scroll_offset, file_scroll_offset, directory_buttons, file_buttons, screen.get_height(), directory_only, files_only)
         
     # if file_scroll_velocity != 0:
     #     file_scroll_offset += file_scroll_velocity
@@ -237,9 +239,9 @@ while running:
     #     if abs(file_scroll_velocity) < 0.1:  # Stop scrolling when velocity is low
     #         file_scroll_velocity = 0
 
-    #     file_scroll_offset = max(0, min(file_scroll_offset, max(0, len(FILES_ONLY) * 40 - (screen.get_height()/2 - 60))))  # Clamp to valid scroll range
+    #     file_scroll_offset = max(0, min(file_scroll_offset, max(0, len(files_only) * 40 - (screen.get_height()/2 - 60))))  # Clamp to valid scroll range
         
-    #     directory_buttons, file_buttons = scroll_files_and_directories(dir_scroll_offset, file_scroll_offset, directory_buttons, file_buttons, screen.get_height(), DIRECTORY_ONLY, FILES_ONLY)
+    #     directory_buttons, file_buttons = scroll_files_and_directories(dir_scroll_offset, file_scroll_offset, directory_buttons, file_buttons, screen.get_height(), DIRECTORY_ONLY, files_only)
 
     lerp_speed = 0.4
     
@@ -248,7 +250,7 @@ while running:
         # Update the button positions based on the new animated offset
         directory_buttons, file_buttons = scroll_files_and_directories(
             dir_scroll_offset, file_scroll_offset, directory_buttons, file_buttons, 
-            screen.get_height(), DIRECTORY_ONLY, FILES_ONLY
+            screen.get_height(), directory_only, files_only
         )
     else:
         file_scroll_offset = file_scroll_target
@@ -259,7 +261,7 @@ while running:
         if abs(file_scroll_velocity) < 0.1:
             file_scroll_velocity = 0
 
-        file_scroll_target = max(0, min(file_scroll_target, max(0, len(FILES_ONLY) * 40 - (screen.get_height()/2 - 60))))
+        file_scroll_target = max(0, min(file_scroll_target, max(0, len(files_only) * 40 - (screen.get_height()/2 - 60))))
 
     for button in directory_buttons:
         button_rect = pygame.Rect(0, button[0], screen.get_width()/5, 40)
@@ -283,17 +285,17 @@ while running:
 
     try:
         # Draw scrollbars
-        dir_max_scroll = max(0, len(DIRECTORY_ONLY) * 40 - (screen.get_height()/2 - 60))
+        dir_max_scroll = max(0, len(directory_only) * 40 - (screen.get_height()/2 - 60))
         if dir_max_scroll > 0:
-            scrollbar_h = (screen.get_height()/2 - 60) * (screen.get_height()/2 - 60) / (len(DIRECTORY_ONLY) * 40)
-            scrollbar_y = dir_scroll_offset * (screen.get_height()/2 - 60) / (len(DIRECTORY_ONLY) * 40)
+            scrollbar_h = (screen.get_height()/2 - 60) * (screen.get_height()/2 - 60) / (len(directory_only) * 40)
+            scrollbar_y = dir_scroll_offset * (screen.get_height()/2 - 60) / (len(directory_only) * 40)
             pygame.draw.rect(screen, (100, 100, 100), 
                             (screen.get_width()/5 - 10, scrollbar_y, 8, scrollbar_h))
 
-        file_max_scroll = max(0, len(FILES_ONLY) * 40 - (screen.get_height()/2 - 60))
+        file_max_scroll = max(0, len(files_only) * 40 - (screen.get_height()/2 - 60))
         if file_max_scroll > 0:
-            scrollbar_h = (screen.get_height()/2 - 60) * (screen.get_height()/2 - 60) / (len(FILES_ONLY) * 40)
-            scrollbar_y = file_scroll_offset * (screen.get_height()/2 - 60) / (len(FILES_ONLY) * 40)
+            scrollbar_h = (screen.get_height()/2 - 60) * (screen.get_height()/2 - 60) / (len(files_only) * 40)
+            scrollbar_y = file_scroll_offset * (screen.get_height()/2 - 60) / (len(files_only) * 40)
             pygame.draw.rect(screen, (100, 100, 100), 
                             (screen.get_width()/5 - 10, screen.get_height()/2 + scrollbar_y, 8, scrollbar_h))
     except:
@@ -446,7 +448,7 @@ while running:
 
                 if jump_to_button.collidepoint(mouse_pos):
                     if player.playing_song != "None" and player.playing_song != "":
-                        file_scroll_target = find_offset_to_file(player.playing_song, screen, FILES_ONLY)
+                        file_scroll_target = find_offset_to_file(player.playing_song, screen, files_only)
 
                 if skip_button.collidepoint(mouse_pos):
                     visualizer = player.next(song_length_bar)
@@ -465,9 +467,9 @@ while running:
                             play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play_hover.jpg")
                     else:
                         player.currently_dir = current_dir
-                        DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, og_folder = get_music_files_and_directories(player.currently_dir, screen.get_height(), og_folder)
-                        player.unshuffled = FILES_ONLY.copy()
-                        player.queue = FILES_ONLY.copy()
+                        directory_only, files_only, directory_buttons, file_buttons, og_folder = get_music_files_and_directories(player.currently_dir, screen.get_height(), og_folder)
+                        player.unshuffled = files_only.copy()
+                        player.queue = files_only.copy()
                         if player.shuffled:
                             player.shuffled = False
                             player.shuffle()
@@ -491,29 +493,29 @@ while running:
                         render_size, render_path = album_handler.update_image(os.path.join(player.currently_dir, player.queue[player.index]))
 
                 if drive_prev_button.collidepoint(mouse_pos):
-                    DRIVES = get_drives()
+                    drives = get_drives()
                     new_folder = drive_handler.switchDrive(-1)
-                    DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, og_folder = get_music_files_and_directories(new_folder, screen.get_height(), og_folder)
+                    directory_only, files_only, directory_buttons, file_buttons, og_folder = get_music_files_and_directories(new_folder, screen.get_height(), og_folder)
                     current_dir = og_folder
                     if not(player.playing) and (player.playing_song == "None" or player.playing_song == ""):
-                        player.queue = FILES_ONLY.copy()
+                        player.queue = files_only.copy()
                         player.currently_dir = current_dir
 
                 if back_button.collidepoint(mouse_pos):
                     new_folder = Path(og_folder).parent
-                    DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, og_folder = get_music_files_and_directories(new_folder, screen.get_height(), og_folder)
+                    directory_only, files_only, directory_buttons, file_buttons, og_folder = get_music_files_and_directories(new_folder, screen.get_height(), og_folder)
                     current_dir = og_folder
                     if not(player.playing) and (player.playing_song == "None" or player.playing_song == ""):
-                        player.queue = FILES_ONLY.copy()
+                        player.queue = files_only.copy()
                         player.currently_dir = current_dir
 
                 for button in directory_buttons:
                     button_rect = pygame.Rect(0, button[0], screen.get_width()/5, 40)
                     if button_rect.collidepoint(mouse_pos):
                         new_folder = os.path.join(og_folder, button[1])
-                        DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, og_folder = get_music_files_and_directories(new_folder, screen.get_height(), og_folder)
+                        directory_only, files_only, directory_buttons, file_buttons, og_folder = get_music_files_and_directories(new_folder, screen.get_height(), og_folder)
                         if (player.playing_song == "None" or player.playing_song == ""):
-                            player.queue = FILES_ONLY.copy()
+                            player.queue = files_only.copy()
                             current_dir = og_folder
                         else:
                             current_dir = og_folder
@@ -528,10 +530,10 @@ while running:
 
                         if search_query != "":
                             search_query = ""
-                            filtered_files = FILES_ONLY.copy()
+                            filtered_files = files_only.copy()
                             file_buttons = [(screen.get_height()/2+(filtered_files.index(file)+1)*40, file) for i, file in enumerate(filtered_files)]
 
-                            file_scroll_target = find_offset_to_file(button[1], screen, FILES_ONLY)
+                            file_scroll_target = find_offset_to_file(button[1], screen, files_only)
 
                 volume.adjust_volume(mouse_pos)
 
@@ -552,6 +554,7 @@ while running:
             jump_to_button.topleft = (screen.get_width()/5+20, screen.get_height()-50)
             render_size, render_path = album_handler.update_size()
             typing_box.topleft = (90, screen.get_height()/2)
+            typing_box.width = 250*(screen.get_width()/1920)
             album_cover[0] = pygame.image.load(render_path)
             album_cover[1] = render_path
             album_cover_rect = album_cover[0].get_rect()
@@ -559,16 +562,17 @@ while running:
             player.update_size(render_size)
             playing_song = ""
             song_length_bar.resize(screen.get_width(), screen.get_height())
+            directory_buttons, file_buttons = scroll_files_and_directories(dir_scroll_offset, file_scroll_offset, directory_buttons, file_buttons, screen.get_height(), directory_only, files_only)
 
         if event.type == pygame.MOUSEWHEEL:
             if mouse_pos[0] <= screen.get_width()/5:  # Only scroll if mouse is within the directory/file section
                 if mouse_pos[1] < screen.get_height()/2:  # Directory section
                     dir_scroll_offset = max(0, min(dir_scroll_offset, 
-                                                   max(0, len(DIRECTORY_ONLY) * 40 - (screen.get_height()/2 - 60))))
+                                                   max(0, len(directory_only) * 40 - (screen.get_height()/2 - 60))))
                     dir_scroll_velocity = -event.y * 4  # Set velocity for inertia effect
                 else:  # File section
                     file_scroll_offset = max(0, min(file_scroll_offset,
-                                                    max(0, len(FILES_ONLY) * 40 - (screen.get_height()/2 - 60))))
+                                                    max(0, len(files_only) * 40 - (screen.get_height()/2 - 60))))
 
                     file_scroll_velocity = -event.y * 4  # Set velocity for inertia effect
         if event.type == pygame.KEYDOWN:
@@ -581,9 +585,9 @@ while running:
                         play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")
                 else:
                     player.currently_dir = current_dir
-                    DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, og_folder = get_music_files_and_directories(player.currently_dir, screen.get_height(), og_folder)
-                    player.unshuffled = FILES_ONLY.copy()
-                    player.queue = FILES_ONLY.copy()
+                    directory_only, files_only, directory_buttons, file_buttons, og_folder = get_music_files_and_directories(player.currently_dir, screen.get_height(), og_folder)
+                    player.unshuffled = files_only.copy()
+                    player.queue = files_only.copy()
                     if player.shuffled:
                         player.shuffled = False
                         player.shuffle()
@@ -596,7 +600,7 @@ while running:
             else:
                 if event.key == pygame.K_BACKSPACE and typing:
                     search_query = search_query[:-1]
-                    filtered_files = search(FILES_ONLY, search_query)
+                    filtered_files = search(files_only, search_query)
                     file_buttons = [(screen.get_height()/2+(filtered_files.index(file)+1)*40, file) for i, file in enumerate(filtered_files)]
                 elif event.key == pygame.K_RETURN and typing:
                     if len(file_buttons) > 0:
@@ -608,20 +612,20 @@ while running:
 
                         typing = False
                         search_query = ""
-                        file_buttons = [(screen.get_height()/2+(FILES_ONLY.index(file)+1)*40, file) for i, file in enumerate(FILES_ONLY)]
+                        file_buttons = [(screen.get_height()/2+(files_only.index(file)+1)*40, file) for i, file in enumerate(files_only)]
 
-                        file_scroll_target = find_offset_to_file(selected_file, screen, FILES_ONLY)
+                        file_scroll_target = find_offset_to_file(selected_file, screen, files_only)
 
 
                         
                 elif event.key == pygame.K_ESCAPE and typing:
                     typing = False
                     search_query = ""
-                    filtered_files = FILES_ONLY.copy()
+                    filtered_files = files_only.copy()
                     file_buttons = [(screen.get_height()/2+(filtered_files.index(file)+1)*40, file) for i, file in enumerate(filtered_files)]
                 elif typing:
                     search_query += event.unicode
-                    filtered_files = search(FILES_ONLY, search_query)
+                    filtered_files = search(files_only, search_query)
                     file_buttons = [(screen.get_height()/2+(filtered_files.index(file)+1)*40, file) for i, file in enumerate(filtered_files)]
                     
     with data_lock:
@@ -638,9 +642,9 @@ while running:
                     play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")
             else:
                 player.currently_dir = current_dir
-                DIRECTORY_ONLY, FILES_ONLY, directory_buttons, file_buttons, og_folder = get_music_files_and_directories(player.currently_dir, screen.get_height(), og_folder)
-                player.unshuffled = FILES_ONLY.copy()
-                player.queue = FILES_ONLY.copy()
+                directory_only, files_only, directory_buttons, file_buttons, og_folder = get_music_files_and_directories(player.currently_dir, screen.get_height(), og_folder)
+                player.unshuffled = files_only.copy()
+                player.queue = files_only.copy()
                 if player.shuffled:
                     player.shuffled = False
                     player.shuffle()

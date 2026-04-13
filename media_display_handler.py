@@ -28,12 +28,13 @@ else:
     IS_MAC = False
 
 class MediaHandler:
-    def __init__(self, song, artist, total_time):
+    def __init__(self, song, artist, total_time, player):
         self.song = song
         self.artist = artist
         self.total_time = total_time
         self.current_time = 0
         self.running = True
+        self.player = player
         
         if IS_MAC:
             # Setup the 'Buttons' in Control Center

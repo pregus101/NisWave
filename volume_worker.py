@@ -1,13 +1,13 @@
 import pygame
+from pygame import Surface
 
 class volume_manager:
-    def __init__(self, screen, screen_width, screen_height):
-        self.screen_width = screen_width
-        self.screen_height = screen_height
-        self.screen = screen
-        # self.visualizer = visualizer
-        self.current_volume = 1
-        self.max_volume = 1
+    def __init__(self, screen: Surface, screen_width: int, screen_height: int) -> None:
+        self.screen_width: int = screen_width
+        self.screen_height: int = screen_height
+        self.screen: Surface = screen
+        self.current_volume: int = 1
+        self.max_volume: int = 1
 
     def draw(self):
         self.current_bar_width = (self.current_volume / self.max_volume * (320 * ((self.screen_width/1920 + self.screen_height/1147) / 2)))
@@ -21,7 +21,7 @@ class volume_manager:
 
         pygame.draw.circle(self.screen, (255, 255, 255), (((self.screen_width-(self.screen_width/5))+self.current_bar_width), (self.screen_height-(self.bar_width_hight/19)*2)+3), 6, )
 
-    def adjust_volume(self, mouse_position):
+    def adjust_volume(self, mouse_position: list[int]) -> None:
         self.bar_width_hight = 320 * ((self.screen_width/1920 + self.screen_height/1147) / 2)
 
         # Calculate the new volume based on mouse position
