@@ -3,6 +3,55 @@ import os
 from wave_renderer import WaveVisualizer
 from get_files import get_files
 from queue_handler import new_shuffler, on_play_shuffle
+import random
+import pygame
+from collections.abc import Callable
+from typing import Any
+
+class Buttons:
+
+    def __init__(self, x: int, y: int, func: Callable[[Any], Any], parameters: list[Any], asset_path: str, asset_path_2: str | None = None, togglable: bool = False) -> None:
+        self.x: int = x
+        self.y: int = y
+        self.func: Callable[[Any], Any] = func
+        self.parameters: list[Any]
+        self.image: pygame.Surface = pygame.image.load(asset_path).convert_alpha()
+        self.image.set_alpha(128)
+        self.image_rect: pygame.Rect = self.image.get_rect()
+        if togglable:
+            self.image_2: pygame.Surface = pygame.image.load(asset_path_2).convert_alpha()  # type: ignore
+            self.image_2.set_alpha(128)
+            self.image_2_rect: pygame.Rect = self.image_2.get_rect() 
+            self.togglable: bool = True
+            self.toggled: bool = False
+
+    def check_hover(self, mouse_pos: list[int]) -> pygame.Surface:
+        if self.image_rect.collidepoint(mouse_pos):
+            self.image.set_alpha(256)
+            return self.image
+        elif self.togglable and self.toggled and self.image_2_rect.collidepoint(mouse_pos):
+            self.image_2.set_alpha(256)
+            return self.image_2
+        elif self.toggled:
+            self.image_2.set_alpha(128)
+            return self.image_2
+        else:
+            self.image.set_alpha(128)
+            return self.image
+        
+    def check_click(self, mouse_pos: list[int]) -> tuple[Any, pygame.Surface]:
+
+        func_value: Any = self.func(self)
+
+        if self.togglable:
+            self.toggled != self.toggled # type: ignore
+
+        if self.toggled:
+            return func_value, self.image_2
+        else:
+            return func_value, self.image
+
+
 
 class Inputs:
 
@@ -95,11 +144,13 @@ class Inputs:
     def play(self, path: None | str = None, current_dir: None | str = None, bar: None | object = None) -> WaveVisualizer | None:
         if path != None:
             self.unshuffled, self.index, self.currently_dir = get_files(path) # type: ignore
-            if not(self.shuffled):
-                self.queue = self.unshuffled.copy()
-            else:
+
+            self.queue = self.unshuffled.copy()
+            
+            if self.shuffled:
                 self.index = 0
                 self.queue = on_play_shuffle(self.unshuffled, path.split("/")[-1][:-4])
+                
 
             self.visualizer = WaveVisualizer(os.path.join(self.currently_dir, self.queue[self.index]),
                                             self.render[0],
@@ -114,9 +165,14 @@ class Inputs:
 
             return self.visualizer
         
-        elif self.queue:
-            if not(self.shuffled):
-                self.index = 0
+        elif self.unshuffled:
+            self.index = 0
+
+            if self.shuffled:
+                song_temp: str = random.choices(self.unshuffled)[0]
+                self.queue = on_play_shuffle(self.unshuffled, song_temp[:-4])
+
+
             self.visualizer = WaveVisualizer(os.path.join(self.currently_dir, self.queue[self.index]),
                                             self.render[0],
                                             self.render[1])

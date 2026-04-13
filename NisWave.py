@@ -7,7 +7,7 @@
 import pygame
 import os
 import threading
-from pynput.keyboard import Key, Listener
+from pynput import keyboard
 from screeninfo import get_monitors
 import sys
 from platformdirs import user_music_dir
@@ -115,24 +115,25 @@ data_lock: threading.Lock = threading.Lock()
 def on_press(key: Any) -> None:
     global media_input
     with data_lock:
-      
-        media_input.append(key) # type: ignore
+        if key != keyboard.Key.caps_lock:
+            print(key)
+            media_input.append(key) # type: ignore
 
 def listening():
-    with Listener(on_press=on_press) as listener: # type: ignore
+    with keyboard.Listener(on_press=on_press) as listener: # type: ignore
         listener.join()
 
 listener_thread = threading.Thread(target=listening)
 listener_thread.daemon = True  # Make it a daemon thread so it exits when main thread exits
-if oper == "windows" or oper == "linux":
-    listener_thread.start()
+# if oper == "windows" or oper == "linux":
+listener_thread.start()
 
 
 # Set up button rate limit
 last_button_press_time = 0
 button_press_cooldown = 0.5  # Cooldown time in seconds
 
-directory_only: list[str], files_only: list[str], directory_buttons: list[tuple[int, str]], file_buttons: list[tuple[int, str]], og_folder: str = get_music_files_and_directories(folder_path, screen.get_height(), folder_path)
+directory_only, files_only, directory_buttons, file_buttons, og_folder = get_music_files_and_directories(folder_path, screen.get_height(), folder_path)
 
 current_dir = og_folder
 
@@ -633,7 +634,7 @@ while running:
         media_input = media_input[1:]
 
     if input_key:
-        if input_key == Key.media_play_pause:
+        if input_key == keyboard.Key.media_play_pause:
             if player.playing_song != "None" and player.playing_song != "":
                 player.pause()
                 if player.playing:
