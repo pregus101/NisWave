@@ -8,7 +8,7 @@ def new_shuffler(index: int, queue_defualt: list[str]) -> list[str]:
     return first_half + second_half
 
 def on_play_shuffle(unshuffled: list[str], song: str) -> list[str]:
-    file: str = search(unshuffled, song)[0]
+    file: str = search(unshuffled, song.split("\\")[-1])[0]
 
     queue: list[str] = unshuffled.copy()
     random.shuffle(queue)
