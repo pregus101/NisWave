@@ -149,7 +149,7 @@ class Inputs:
             
             if self.shuffled:
                 self.index = 0
-                self.queue = on_play_shuffle(self.unshuffled, path.split("/")[-1][:-4])
+                self.queue = on_play_shuffle(self.unshuffled, path.split("/")[-1])
                 
 
             self.visualizer = WaveVisualizer(os.path.join(self.currently_dir, self.queue[self.index]),
@@ -170,7 +170,7 @@ class Inputs:
 
             if self.shuffled:
                 song_temp: str = random.choices(self.unshuffled)[0]
-                self.queue = on_play_shuffle(self.unshuffled, song_temp[:-4])
+                self.queue = on_play_shuffle(self.unshuffled, song_temp)
 
 
             self.visualizer = WaveVisualizer(os.path.join(self.currently_dir, self.queue[self.index]),
