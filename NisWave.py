@@ -157,17 +157,19 @@ file_text = font.render("Files: ", True, (255, 255, 255))
 directory_text = font.render("Directories: ", True, (255, 255, 255))
 
 image_handler.update_size()
+render_path: Path
+render_size: tuple[int, int]
 render_size, render_path = image_handler.default_cover("")
 
-button_images: list[pygame.image] = []
-button_images.append([pygame.image.load(os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")), os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")])
-button_images.append([pygame.image.load(os.path.join(os.path.dirname(__file__), "assets/shuffle_unshuffled.jpg")), os.path.join(os.path.dirname(__file__), "assets/shuffle_unshuffled.jpg")])
-album_cover = [pygame.image.load(render_path), render_path]
-album_cover_rect = album_cover[0].get_rect()
+button_images: list[pygame.Surface] = [] 
+button_images.append([pygame.image.load(os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")), os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")]) # type: ignore
+button_images.append([pygame.image.load(os.path.join(os.path.dirname(__file__), "assets/shuffle_unshuffled.jpg")), os.path.join(os.path.dirname(__file__), "assets/shuffle_unshuffled.jpg")]) # type: ignore
+album_cover: list[Any] = [pygame.image.load(render_path), render_path]
+album_cover_rect: list[Any] = album_cover[0].get_rect()
 album_cover_rect.center = (screen.get_width()/5 + (screen.get_width()-screen.get_width()/5)/2, screen.get_height()/2)
 
 # Frame rate limiter for battery savings
-clock = pygame.time.Clock()
+clock: pygame.time.Clock = pygame.time.Clock()
 FPS = 20
 
 # set defualt button colors and define button rectangles for click detection
@@ -180,10 +182,10 @@ drive_prev_color = (64, 64, 64)  # Default gray for drive previous button
 jump_to_button_color = (64, 64, 64) # Default gray for the jump to button
 
 skip_button = pygame.Rect((screen.get_width()-screen.get_width()/5)/2+30+screen.get_width()/5, screen.get_height() - 50, 50, 20)
-play_pause_button = button_images[0][0].get_rect()
-play_pause_button.center = ((screen.get_width()-screen.get_width()/5)/2+screen.get_width()/5, screen.get_height() - 50)
-shuffle_button = button_images[1][0].get_rect()
-shuffle_button.center = ((screen.get_width()-screen.get_width()/5)/2-135+screen.get_width()/5+25, screen.get_height() - 50)
+play_pause_button: pygame.Rect = button_images[0][0].get_rect() # type: ignore
+play_pause_button.center = ((screen.get_width()-screen.get_width()/5)/2+screen.get_width()/5, screen.get_height() - 50) # type: ignore
+shuffle_button: pygame.Rect = button_images[1][0].get_rect()
+shuffle_button.center = ((screen.get_width()-screen.get_width()/5)/2-135+screen.get_width()/5+25, screen.get_height() - 50) # type: ignore
 previous_button = pygame.Rect((screen.get_width()-screen.get_width()/5)/2-80+screen.get_width()/5, screen.get_height() - 50, 50, 20)
 drive_prev_button = pygame.Rect((screen.get_width()/5 + 10), (screen.get_height()/60), 25, 40)
 back_button = pygame.Rect(screen.get_width()/5-40, 5, 20, 20)
