@@ -1,4 +1,5 @@
 package com.pregus101;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,7 +32,23 @@ public class Play_handle {
         else {
             index = unshuffled.indexOf(songPath);
         }
-        loadSong(songPath);
+        
+        if (!queue.isEmpty()) {
+            loadSong(queue.get(index));
+        }
+    }
+
+    public void play(){
+        index = 0;
+        queue = new ArrayList<Path>(unshuffled);
+
+        if (shuffled) {
+            Collections.shuffle(queue);
+        }
+
+        if (!queue.isEmpty()) {
+            loadSong(queue.get(index));
+        }
     }
 
     public void skip(){
@@ -45,11 +62,15 @@ public class Play_handle {
     }
 
     public void shuffle(){
-
+        shuffled = !shuffled;
     }
 
     public void pause(){
         
+    }
+
+    public void updatePath(Path updatedPath){
+        current_dir = updatedPath;
     }
 
     private void loadSong(Path songPath){

@@ -16,7 +16,18 @@ public class FileAndDir {
             Map<Boolean, List<Path>> partitioned = stream.collect(
                 Collectors.partitioningBy(Files::isDirectory)
             );
-            return new ArrayList<Path>(partitioned.get(false));
+            ArrayList<Path> out = new ArrayList<Path>(partitioned.get(false));
+
+            for (int i = 0; i < out.size();) {
+                    if (!out.get(i).toString().substring(out.get(i).toString().length()-4, out.get(i).toString().length()).equals(".mp3") || out.get(i).toString().substring(0, 1).equals(".")) {
+                    out.remove(out.get(i));
+                }
+                else {
+                    i++;
+                }
+            }
+            System.out.println(out.toString());
+            return out;
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -44,7 +55,19 @@ public class FileAndDir {
             Map<Boolean, List<Path>> partitioned = stream.collect(
                 Collectors.partitioningBy(Files::isDirectory)
             );
-            return new ArrayList<Path>(partitioned.get(false));
+
+            ArrayList<Path> out = new ArrayList<Path>(partitioned.get(false));
+
+            for (int i = 0; i < out.size();) {
+                    if (!out.get(i).toString().substring(out.get(i).toString().length()-4, out.get(i).toString().length()).equals(".mp3") || out.get(i).toString().substring(0, 1).equals(".")) {
+                    out.remove(out.get(i));
+                }
+                else {
+                    i++;
+                }
+            }
+            System.out.println(out.toString());
+            return out;
         }
         catch (IOException e) {
             e.printStackTrace();
