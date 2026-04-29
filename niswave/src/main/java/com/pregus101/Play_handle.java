@@ -6,6 +6,12 @@ import java.util.Collections;
 import java.io.FileInputStream;
 import javazoom.jl.player.Player;
 
+class MyRunnable implements Runnable {
+    public void run() {
+        System.out.println("Thread is running via Runnable");
+    }
+}
+
 public class Play_handle {
     public String playing_song = "";
     public Path current_dir;
@@ -74,13 +80,18 @@ public class Play_handle {
     }
 
     private void loadSong(Path songPath){
-        try {
-            FileInputStream fileInputStream = new FileInputStream(songPath.toString());
-            player = new Player(fileInputStream);
-            System.out.println("Playing...");
-            player.play();
-        } catch (Exception e) {
-            System.out.println(e);
+        if (player != null){
+            player.close();
         }
+        new Thread(() -> {
+            try {
+                FileInputStream fileInputStream = new FileInputStream(songPath.toString());
+                player = new Player(fileInputStream);
+                System.out.println("Playing...");
+                player.play();
+            } catch (Exception e) {
+                System.out.println(e);
+            }
+        }).start();
     }
 }

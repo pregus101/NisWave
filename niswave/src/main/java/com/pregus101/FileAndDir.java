@@ -59,14 +59,14 @@ public class FileAndDir {
             ArrayList<Path> out = new ArrayList<Path>(partitioned.get(false));
 
             for (int i = 0; i < out.size();) {
-                    if (!out.get(i).toString().substring(out.get(i).toString().length()-4, out.get(i).toString().length()).equals(".mp3") || out.get(i).toString().substring(0, 1).equals(".")) {
+                if (!out.get(i).toString().substring(out.get(i).toString().length()-4, out.get(i).toString().length()).equals(".mp3") || out.get(i).toString().substring(dirPath.toString().length()+1, dirPath.toString().length()+2).equals(".")) {
                     out.remove(out.get(i));
                 }
                 else {
                     i++;
                 }
             }
-            System.out.println(out.toString());
+            System.out.println(out);
             return out;
         }
         catch (IOException e) {
