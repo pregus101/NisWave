@@ -58,17 +58,29 @@ public class Play_handle {
     }
 
     public void skip(){
-        index++;
-        loadSong(queue.get(index));
+        if (index < queue.size() - 1) {
+            index++;
+            loadSong(queue.get(index));
+        }
     }
 
     public void previous(){
-        index--;
+        if (index > 0) {
+            index--;
+        }
         loadSong(queue.get(index));
     }
 
     public void shuffle(){
         shuffled = !shuffled;
+
+        if (shuffled){
+            Collections.shuffle(queue);
+        }
+        else {
+            queue = new ArrayList<>(unshuffled);
+            index = queue.indexOf(playing_song);
+        }
     }
 
     public void pause(){
