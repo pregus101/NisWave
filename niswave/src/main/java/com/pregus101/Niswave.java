@@ -1,13 +1,18 @@
 package com.pregus101;
 import java.awt.BorderLayout;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.io.File;
 import java.nio.file.FileSystems;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
 
 public class Niswave extends JPanel {
     public static void main(String[] args) {
-        Play_handle player = new Play_handle(FileSystems.getDefault().getPath("/Volumes/Samsung/Music/Wha"));
+        Play_handle player = new Play_handle(FileSystems.getDefault().getPath(System.getProperty("user.home")+File.separator+"Music"+File.separator+"Breakcore For Breakfast"));
+        System.out.println(FileSystems.getDefault().getPath(System.getProperty("user.home")+File.separator+"Music"+File.separator+"Breakcore For Breakfast"));
         JFrame frame = new JFrame("NisWave");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
@@ -40,10 +45,30 @@ public class Niswave extends JPanel {
         frame.setVisible(true);
 
         previousButton.addActionListener(e -> player.previous());
-        pauseButton.addActionListener(e -> player.play());
+        pauseButton.addActionListener(e -> player.pause());
+        // pauseButton.addActionListener(e -> playToggle(player, pauseButton));
         skipButton.addActionListener(e -> player.skip());
         shuffleButton.addActionListener(e -> player.shuffle());
+        shuffleButton.addActionListener(e -> shuffleToggle(player, shuffleButton));
         
     }
+
+    public static void shuffleToggle(Play_handle player, JButton shuffleButton){
+        if (player.shuffled){
+            shuffleButton.setName("shuffled");
+        }
+        else {
+            shuffleButton.setName("shuffle");
+        }
+    }
+
+    // public static void playToggle(Play_handle player, JButton pauseButton){
+    //     if (player.shuffled){
+    //         pauseButton.setName("pause");
+    //     }
+    //     else {
+    //         pauseButton.setName("play");
+    //     }
+    // }
 }
 

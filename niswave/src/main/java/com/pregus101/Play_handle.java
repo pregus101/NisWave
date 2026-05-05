@@ -4,7 +4,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.io.FileInputStream;
-import javazoom.jl.player.Player;
+
+import javazoom.jlgui.basicplayer.*;;
 
 class MyRunnable implements Runnable {
     public void run() {
@@ -14,13 +15,16 @@ class MyRunnable implements Runnable {
 
 public class Play_handle {
     public String playing_song = "";
+    public Path playing_song_path;
     public Path current_dir;
     private ArrayList<Path> unshuffled;
     public ArrayList<Path> queue;
-    private boolean shuffled = false;
+    public boolean shuffled = false;
     private int index = 0;
     private boolean playing = false;
-    private Player player;
+    private boolean paused = true;
+    private BasicPlayer player;
+    private double pausePos;
     
     public Play_handle(Path current_dir){
         this.current_dir = current_dir;
@@ -41,6 +45,12 @@ public class Play_handle {
         
         if (!queue.isEmpty()) {
             loadSong(queue.get(index));
+            paused = false;
+            playing = true;
+        }
+        else{
+            paused = true;
+            playing = false;
         }
     }
 
@@ -54,6 +64,12 @@ public class Play_handle {
 
         if (!queue.isEmpty()) {
             loadSong(queue.get(index));
+            paused = false;
+            playing = true;
+        }
+        else{
+            paused = true;
+            playing = false;
         }
     }
 
@@ -62,13 +78,19 @@ public class Play_handle {
             index++;
             loadSong(queue.get(index));
         }
+        else {
+            player.stop();
+            playing = false;
+        }
     }
 
     public void previous(){
-        if (index > 0) {
-            index--;
+        if (!queue.isEmpty()){
+            if (index > 0) {
+                index--;
+            }
+            loadSong(queue.get(index));
         }
-        loadSong(queue.get(index));
     }
 
     public void shuffle(){
@@ -76,15 +98,30 @@ public class Play_handle {
 
         if (shuffled){
             Collections.shuffle(queue);
+            queue.remove(playing_song_path);
+            queue.add(0, playing_song_path);
         }
         else {
             queue = new ArrayList<>(unshuffled);
-            index = queue.indexOf(playing_song);
         }
+        index = queue.indexOf(playing_song_path);
     }
 
     public void pause(){
-        
+        if (playing){
+            if (paused){
+                pausePos = player.getPosition();
+                player.stop();
+            }
+            else{
+                loadSong(queue.get(index));
+                
+            }
+            paused = !paused;
+        }
+        else {
+            play();
+        }
     }
 
     public void updatePath(Path updatedPath){
@@ -92,14 +129,16 @@ public class Play_handle {
     }
 
     private void loadSong(Path songPath){
+        playing_song = songPath.getFileName().toString();
+        playing_song_path = songPath;
         if (player != null){
-            player.close();
+            player.stop();
         }
         new Thread(() -> {
             try {
                 FileInputStream fileInputStream = new FileInputStream(songPath.toString());
-                player = new Player(fileInputStream);
-                System.out.println("Playing...");
+                player = new BasicPlayer();
+                System.out.println("Playing: " + playing_song.toString());
                 player.play();
             } catch (Exception e) {
                 System.out.println(e);
