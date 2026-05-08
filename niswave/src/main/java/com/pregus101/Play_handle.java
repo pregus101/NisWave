@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.io.FileInputStream;
 
-import javazoom.jlgui.basicplayer.*;;
+import javazoom.jlgui.basicplayer.*;
 
 class MyRunnable implements Runnable {
     public void run() {
@@ -22,13 +22,27 @@ public class Play_handle {
     public boolean shuffled = false;
     private int index = 0;
     private boolean playing = false;
-    private boolean paused = true;
-    private BasicPlayer player;
+    public boolean paused = true;
+    private BasicController player = (BasicController) new BasicPlayer();
     private double pausePos;
+    private boolean switching = false;
     
     public Play_handle(Path current_dir){
         this.current_dir = current_dir;
         unshuffled = FileAndDir.getFiles(current_dir);
+        new Thread(() -> {
+            while (true) { 
+                if (player != null && playing && !paused && ((BasicPlayer) player).getStatus() == BasicPlayer.STOPPED && !switching){
+                    this.skip();
+                }
+
+                // try {
+                //     Thread.sleep(500);
+                // } catch (InterruptedException) {
+                //     break;
+                // }
+            }
+        }).start();
     }
 
     public void play(Path songPath){
@@ -79,7 +93,12 @@ public class Play_handle {
             loadSong(queue.get(index));
         }
         else {
-            player.stop();
+            try {
+                player.stop();
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
             playing = false;
         }
     }
@@ -109,15 +128,19 @@ public class Play_handle {
 
     public void pause(){
         if (playing){
-            if (paused){
-                pausePos = player.getPosition();
-                player.stop();
-            }
-            else{
-                loadSong(queue.get(index));
-                
-            }
             paused = !paused;
+            try {
+                if (paused){
+                    player.pause();
+                }
+                else{
+                    
+                    player.resume();
+                }
+            }
+            catch (BasicPlayerException e){
+                e.printStackTrace();
+            }
         }
         else {
             play();
@@ -129,20 +152,35 @@ public class Play_handle {
     }
 
     private void loadSong(Path songPath){
+        switching = true;
         playing_song = songPath.getFileName().toString();
         playing_song_path = songPath;
-        if (player != null){
+        
+        try {
             player.stop();
+            player.open(songPath.toFile());
+            player.play();
+            paused = false;
+            playing = true;
+            System.out.println("Playing: " + playing_song.toString());
         }
-        new Thread(() -> {
-            try {
-                FileInputStream fileInputStream = new FileInputStream(songPath.toString());
-                player = new BasicPlayer();
-                System.out.println("Playing: " + playing_song.toString());
-                player.play();
-            } catch (Exception e) {
-                System.out.println(e);
-            }
-        }).start();
+
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        switching = false;
+
+        // if (player != null){
+        // }
+        // new Thread(() -> {
+        //     try {
+        //         FileInputStream fileInputStream = new FileInputStream(songPath.toString());
+        //         player = new BasicPlayer();
+        //         System.out.println("Playing: " + playing_song.toString());
+        //         player.play();
+        //     } catch (Exception e) {
+        //         System.out.println(e);
+        //     }
+        // }).start();
     }
 }
