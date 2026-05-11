@@ -5,6 +5,8 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.io.File;
 import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -13,6 +15,7 @@ import javax.swing.JPanel;
 public class Niswave extends JPanel {
     public static void main(String[] args) {
         try {
+            Path dir = FileSystems.getDefault().getPath(System.getProperty("user.home"));
             Play_handle player = new Play_handle(FileSystems.getDefault().getPath(System.getProperty("user.home")+File.separator+"Music"+File.separator+"Breakcore For Breakfast"));
             System.out.println(FileSystems.getDefault().getPath(System.getProperty("user.home")+File.separator+"Music"+File.separator+"Breakcore For Breakfast"));
             JFrame frame = new JFrame("NisWave");
@@ -33,6 +36,19 @@ public class Niswave extends JPanel {
             };
 
             canvas.setBackground(Color.black);
+
+            JPanel dirNav = new JPanel();
+            ArrayList<Path> dirs = FileAndDir.getDirs(dir);
+            for (Path iDir : dirs) {
+                JButton tempB = new JButton(iDir.getName(iDir.getNameCount() - 1).toString());
+                dirNav.add(tempB);
+                // tempB.addActionListener(e -> dir = iDir);
+            }
+
+            frame.add(canvas, BorderLayout.CENTER);
+            frame.add(dirNav, BorderLayout.WEST);
+            frame.setSize(400/5, 400);
+            frame.setVisible(true);
 
             JPanel controls = new JPanel();
             controls.setBackground(new Color(143, 11, 224));
