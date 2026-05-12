@@ -45,6 +45,9 @@ public class Play_handle {
 
     public void play(Path songPath){
         index = 0;
+        if (!playing){
+            
+        }
         queue = new ArrayList<Path>(unshuffled);
         if (shuffled) {
             Collections.shuffle(queue);

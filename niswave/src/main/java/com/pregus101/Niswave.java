@@ -1,6 +1,8 @@
 package com.pregus101;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.io.File;
@@ -8,16 +10,19 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 
 public class Niswave extends JPanel {
     public static void main(String[] args) {
         try {
-            Path dir = FileSystems.getDefault().getPath(System.getProperty("user.home"));
-            Play_handle player = new Play_handle(FileSystems.getDefault().getPath(System.getProperty("user.home")+File.separator+"Music"+File.separator+"Breakcore For Breakfast"));
-            System.out.println(FileSystems.getDefault().getPath(System.getProperty("user.home")+File.separator+"Music"+File.separator+"Breakcore For Breakfast"));
+            Path musicPath = FileSystems.getDefault().getPath(System.getProperty("user.home") + File.separator + "Music");
+            Play_handle player = new Play_handle(musicPath);
+
             JFrame frame = new JFrame("NisWave");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setLayout(new BorderLayout());
@@ -29,37 +34,28 @@ public class Niswave extends JPanel {
                     g.setFont(new Font("Monospaced", Font.BOLD, 16)); 
                     g.setColor(Color.GREEN);
                     if (player.playing_song != null) {
-                        // Draw string at x=10, y=25
-                        g.drawString("NOW PLAYING: " + player.playing_song, 10, (frame.getHeight()/4)*3);
+                        g.drawString("NOW PLAYING: " + player.playing_song, 10, (getHeight() / 4) * 3);
                     }
                 }
             };
-
             canvas.setBackground(Color.black);
 
             JPanel dirNav = new JPanel();
-            ArrayList<Path> dirs = FileAndDir.getDirs(dir);
-            for (Path iDir : dirs) {
-                JButton tempB = new JButton(iDir.getName(iDir.getNameCount() - 1).toString());
-                dirNav.add(tempB);
-                // tempB.addActionListener(e -> dir = iDir);
-            }
+            dirNav.setLayout(new BoxLayout(dirNav, BoxLayout.Y_AXIS)); // Vertical Layout
+            
+            JScrollPane scrollPane = new JScrollPane(dirNav);
+            scrollPane.setPreferredSize(new Dimension(150, 400));
+            scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+            scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
-            frame.add(canvas, BorderLayout.CENTER);
-            frame.add(dirNav, BorderLayout.WEST);
-            frame.setSize(400/5, 400);
-            frame.setVisible(true);
+            refreshButton(dirNav, musicPath, player);
 
             JPanel controls = new JPanel();
             controls.setBackground(new Color(143, 11, 224));
-            JButton previousButton = new JButton("Previous");
-            previousButton.setBackground(Color.green);
-            JButton pauseButton = new JButton("Play");
-            pauseButton.setBackground(Color.green);
-            JButton skipButton = new JButton("Skip");
-            skipButton.setBackground(Color.green);
-            JButton shuffleButton = new JButton("Shuffle"); 
-            shuffleButton.setBackground(Color.green);
+            JButton previousButton = createStyledButton("Previous");
+            JButton pauseButton = createStyledButton("Play");
+            JButton skipButton = createStyledButton("Skip");
+            JButton shuffleButton = createStyledButton("Shuffle");
 
             controls.add(previousButton);
             controls.add(pauseButton);
@@ -67,54 +63,65 @@ public class Niswave extends JPanel {
             controls.add(shuffleButton);
 
             frame.add(canvas, BorderLayout.CENTER);
+            frame.add(scrollPane, BorderLayout.WEST);
             frame.add(controls, BorderLayout.SOUTH);
-            frame.setSize(400, 400);
+            
+            frame.setSize(600, 500);
+            frame.setLocationRelativeTo(null);
             frame.setVisible(true);
 
-            previousButton.addActionListener(e -> {
-                player.previous();
-                playToggle(player, pauseButton);
-                canvas.repaint();
-            });
-            pauseButton.addActionListener(e -> {
-                player.pause();
-                playToggle(player, pauseButton);
-                canvas.repaint();
-            });
+            previousButton.addActionListener(e -> { player.previous(); playToggle(player, pauseButton); canvas.repaint(); });
+            pauseButton.addActionListener(e -> { player.pause(); playToggle(player, pauseButton); canvas.repaint(); });
+            skipButton.addActionListener(e -> { player.skip(); playToggle(player, pauseButton); canvas.repaint(); });
+            shuffleButton.addActionListener(e -> { player.shuffle(); shuffleToggle(player, shuffleButton); });
 
-            skipButton.addActionListener(e -> {
-                player.skip();
-                playToggle(player, pauseButton);
-                canvas.repaint();
-            });
-            shuffleButton.addActionListener(e -> {
-                player.shuffle();
-                shuffleToggle(player, shuffleButton);
-                controls.repaint();
-            });
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
-    public static void shuffleToggle(Play_handle player, JButton shuffleButton){
-        if (player.shuffled){
-            shuffleButton.setText("Shuffled");
+    public static void refreshButton(JPanel dirNav, Path dir, Play_handle player) {
+        dirNav.removeAll();
+        
+        JButton backBtn = new JButton("...");
+        backBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        backBtn.addActionListener(e -> {
+            if (dir.getParent() != null) {
+                player.current_dir = dir.getParent();
+                refreshButton(dirNav, player.current_dir, player);
+            }
+        });
+        dirNav.add(backBtn);
+        dirNav.add(Box.createVerticalStrut(5));
+
+        ArrayList<Path> dirs = FileAndDir.getDirs(dir);
+        for (Path iDir : dirs) {
+            JButton btn = new JButton(iDir.getFileName().toString());
+            btn.setAlignmentX(Component.LEFT_ALIGNMENT);
+            btn.setMaximumSize(new Dimension(140, 30)); 
+            btn.addActionListener(e -> {
+                player.current_dir = iDir;
+                refreshButton(dirNav, iDir, player);
+            });
+            dirNav.add(btn);
+            dirNav.add(Box.createVerticalStrut(5)); 
         }
-        else {
-            shuffleButton.setText("Shuffle");
-        }
+
+        dirNav.revalidate(); 
+        dirNav.repaint();    
     }
 
-    public static void playToggle(Play_handle player, JButton pauseButton){
-        if (player.paused){
-            pauseButton.setText("Play");
-        }
-        else {
-            pauseButton.setText("Pause");
-        }
+    private static JButton createStyledButton(String text) {
+        JButton b = new JButton(text);
+        b.setBackground(Color.green);
+        return b;
+    }
+
+    public static void shuffleToggle(Play_handle player, JButton shuffleButton) {
+        shuffleButton.setText(player.shuffled ? "Shuffled" : "Shuffle");
+    }
+
+    public static void playToggle(Play_handle player, JButton pauseButton) {
+        pauseButton.setText(player.paused ? "Play" : "Pause");
     }
 }
-
