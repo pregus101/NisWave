@@ -46,7 +46,7 @@ public class Play_handle {
     public void play(Path songPath){
         index = 0;
         if (!playing){
-            
+            unshuffled = FileAndDir.getFiles(current_dir);
         }
         queue = new ArrayList<Path>(unshuffled);
         if (shuffled) {
@@ -71,6 +71,9 @@ public class Play_handle {
 
     public void play(){
         index = 0;
+        if (!playing){
+            unshuffled = FileAndDir.getFiles(current_dir);
+        }
         queue = new ArrayList<Path>(unshuffled);
 
         if (shuffled) {

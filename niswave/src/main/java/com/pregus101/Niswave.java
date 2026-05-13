@@ -41,14 +41,24 @@ public class Niswave extends JPanel {
             canvas.setBackground(Color.black);
 
             JPanel dirNav = new JPanel();
-            dirNav.setLayout(new BoxLayout(dirNav, BoxLayout.Y_AXIS)); // Vertical Layout
+            dirNav.setBackground(Color.DARK_GRAY);
+            dirNav.setLayout(new BoxLayout(dirNav, BoxLayout.Y_AXIS));
             
-            JScrollPane scrollPane = new JScrollPane(dirNav);
-            scrollPane.setPreferredSize(new Dimension(150, 400));
-            scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-            scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+            JScrollPane scrollPaneDir = new JScrollPane(dirNav);
+            scrollPaneDir.setPreferredSize(new Dimension(150, 400));
+            scrollPaneDir.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+            scrollPaneDir.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
-            refreshButton(dirNav, musicPath, player);
+            JPanel fileSel = new JPanel();
+            fileSel.setBackground(Color.DARK_GRAY);
+            fileSel.setLayout(new BoxLayout(fileSel, BoxLayout.Y_AXIS));
+
+            JScrollPane scrollPaneFile = new JScrollPane(fileSel);
+            scrollPaneFile.setPreferredSize(new Dimension(150, 400));
+            scrollPaneFile.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+            scrollPaneFile.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+            refreshButton(dirNav, fileSel, musicPath, player, canvas);
 
             JPanel controls = new JPanel();
             controls.setBackground(new Color(143, 11, 224));
@@ -63,7 +73,8 @@ public class Niswave extends JPanel {
             controls.add(shuffleButton);
 
             frame.add(canvas, BorderLayout.CENTER);
-            frame.add(scrollPane, BorderLayout.WEST);
+            frame.add(scrollPaneDir, BorderLayout.WEST);
+            frame.add(scrollPaneFile, BorderLayout.EAST);
             frame.add(controls, BorderLayout.SOUTH);
             
             frame.setSize(600, 500);
@@ -80,15 +91,17 @@ public class Niswave extends JPanel {
         }
     }
 
-    public static void refreshButton(JPanel dirNav, Path dir, Play_handle player) {
+    public static void refreshButton(JPanel dirNav, JPanel fileSel, Path dir, Play_handle player, JPanel canvas) {
         dirNav.removeAll();
+        fileSel.removeAll();
         
         JButton backBtn = new JButton("...");
+        backBtn.setBackground(Color.green);
         backBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
         backBtn.addActionListener(e -> {
             if (dir.getParent() != null) {
                 player.current_dir = dir.getParent();
-                refreshButton(dirNav, player.current_dir, player);
+                refreshButton(dirNav, fileSel, player.current_dir, player, canvas);
             }
         });
         dirNav.add(backBtn);
@@ -97,16 +110,34 @@ public class Niswave extends JPanel {
         ArrayList<Path> dirs = FileAndDir.getDirs(dir);
         for (Path iDir : dirs) {
             JButton btn = new JButton(iDir.getFileName().toString());
+            btn.setBackground(Color.green);
             btn.setAlignmentX(Component.LEFT_ALIGNMENT);
             btn.setMaximumSize(new Dimension(140, 30)); 
             btn.addActionListener(e -> {
                 player.current_dir = iDir;
-                refreshButton(dirNav, iDir, player);
+                refreshButton(dirNav, fileSel, iDir, player, canvas);
             });
             dirNav.add(btn);
             dirNav.add(Box.createVerticalStrut(5)); 
         }
 
+        ArrayList<Path> files = FileAndDir.getFiles(dir);
+        for (Path file : files) {
+            JButton btn = new JButton(file.getFileName().toString());
+            btn.setBackground(Color.green);
+            btn.setAlignmentX(Component.LEFT_ALIGNMENT);
+            btn.setMaximumSize(new Dimension(140, 30)); 
+            btn.addActionListener(e -> {
+                player.play(file);
+                canvas.repaint();
+            });
+            fileSel.add(btn);
+            fileSel.add(Box.createVerticalStrut(5)); 
+        }
+
+
+        fileSel.revalidate();
+        fileSel.repaint();
         dirNav.revalidate(); 
         dirNav.repaint();    
     }

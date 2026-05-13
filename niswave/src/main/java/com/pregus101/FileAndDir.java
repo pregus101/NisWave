@@ -26,7 +26,6 @@ public class FileAndDir {
                     i++;
                 }
             }
-            System.out.println(out.toString());
             return out;
         }
         catch (IOException e) {
@@ -66,7 +65,6 @@ public class FileAndDir {
                     i++;
                 }
             }
-            System.out.println(out);
             return out;
         }
         catch (IOException e) {
