@@ -45,7 +45,7 @@ class WaveVisualizer:
     Thread-safe: All public methods can safely be called from multiple threads.
     """
     
-    def __init__(self, file_path: str, render_width: int, render_height: int, screen_surface: pygame.Surface | None = None) -> None:
+    def __init__(self, file_path: str, render_width: int, render_height: int, screen_surface: pygame.Surface | None = None, render_bars: bool = True) -> None:
         """
         Initialize the wave visualizer with custom render parameters.
         
@@ -54,12 +54,14 @@ class WaveVisualizer:
             render_width (int): Width for the render area
             render_height (int): Height for the render area
             screen_surface (pygame.Surface, optional): External pygame surface to render to
+            render_bars (bool): Whether to render bars or waveform
         """
         self.file_path: str = file_path
         self.render_width: int = render_width
         self.render_height: int = render_height
         self.screen_surface: pygame.Surface | None = screen_surface
-        
+        self.render_bars: bool = render_bars
+
         # Thread safety lock for this visualizer instance
         self._instance_lock: threading.Lock = threading.Lock()
         
@@ -259,25 +261,43 @@ class WaveVisualizer:
                     self.bar_height_target[i] * (1 - DECAY_RATE)
                 )
         
-        # Draw background
-        # screen.fill((0, 0, 0))
-        
+
         # Draw bars
         size = int((self.render_width / 1470) * 10)
-        with data_lock:
-            bar_index = 0
-            for i in range(1, size + 1):
-                for j in range(20 * i, 20 * i + 20 + 1):
-                    if bar_index >= len(self.bar_height):
-                        break
-                    
-                    bar_height_y = int(self.bar_height[bar_index])
-                    bar_x = int((j - 20) * ((self.render_width / size) / 20)) + 2
-                    bar_w = 2
-                    bar_h = self.render_height - bar_height_y / 50
-                    
-                    pygame.draw.rect(screen, self.color, (bar_x, bar_height_y, bar_w, bar_h))
-                    bar_index += 1
+
+        if self.render_bars:
+            with data_lock:
+                bar_index = 0
+                for i in range(1, size + 1):
+                    for j in range(20 * i, 20 * i + 20 + 1):
+                        if bar_index >= len(self.bar_height):
+                            break
+                        
+                        bar_height_y = int(self.bar_height[bar_index])
+                        bar_x = int((j - 20) * ((self.render_width / size) / 20)) + 2
+                        bar_w = 2
+                        bar_h = self.render_height - bar_height_y / 50
+                        
+                        pygame.draw.rect(screen, self.color, (bar_x, bar_height_y, bar_w, bar_h))
+                        bar_index += 1
+        else:
+            with data_lock:
+                y_index = 0
+                wave_points: list[tuple[int, int]] = []
+                wave_points.append((0, self.render_height))  # Start at bottom-left
+                for j in range(1, size + 1):
+                    for i in range(20 * j, 20 * j + 20 + 1):
+                        if y_index >= len(self.bar_height):
+                            break
+
+                        x = int((i - 20) * ((self.render_width / size) / 20)) + 2
+                        y = int(self.bar_height[y_index]) 
+                        wave_points.append((x, y))
+                        y_index += 1
+            
+            wave_points.append((self.render_width, self.render_height))  # End at bottom-right
+            pygame.draw.polygon(screen, self.color, wave_points)
+
         
         pygame.display.flip()
         clock.tick(60)

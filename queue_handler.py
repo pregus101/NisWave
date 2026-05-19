@@ -1,5 +1,4 @@
 import random
-from get_files import search
 from pathlib import Path
 
 def new_shuffler(index: int, queue_defualt: list[str]) -> list[str]:
