@@ -82,7 +82,7 @@ class Buttons:
 
 class Inputs:
 
-    def __init__(self, current_dir: str = "") -> None:
+    def __init__(self, current_dir: str = "", bar: None | object = None) -> None:
         self.unshuffled: list[str] = []
         self.queue: list[str] = []
         self.playing_song: str = "None"
@@ -94,6 +94,7 @@ class Inputs:
         self.render: list[int] = [720, 720]
         self.queue_add: int = 0
         self.nav_dir: str = current_dir
+        self.bar: None | object = None
 
     def shuffle(self) -> None:
         self.shuffled = not self.shuffled
@@ -118,6 +119,10 @@ class Inputs:
                 if bar: 
                     bar.total_length = 0 # type: ignore
                     bar.visualizer = None # type: ignore
+                elif self.bar:
+                    self.bar.total_length = 0 # type: ignore
+                    self.bar.visualizer = None # type: ignore
+                return None
 
             else:
                 self.index += 1
@@ -131,6 +136,9 @@ class Inputs:
                 if bar:
                     bar.total_length = self.visualizer.audio_duration # type: ignore
                     bar.visualizer = self.visualizer  # type: ignore
+                elif self.bar:
+                    self.bar.total_length = self.visualizer.audio_duration # type: ignore
+                    self.bar.visualizer = self.visualizer  # type: ignore
             return self.visualizer
 
     def pause(self, bar: None | object = None) -> None | WaveVisualizer:
@@ -165,6 +173,9 @@ class Inputs:
                     if bar:
                         bar.total_length = self.visualizer.audio_duration # type: ignore
                         bar.visualizer = self.visualizer  # type: ignore
+                    elif self.bar:
+                        self.bar.total_length = self.visualizer.audio_duration # type: ignore
+                        self.bar.visualizer = self.visualizer  # type: ignore
 
             return self.visualizer
         return None
@@ -190,6 +201,9 @@ class Inputs:
             if bar:
                 bar.total_length = self.visualizer.audio_duration # type: ignore
                 bar.visualizer = self.visualizer  # type: ignore
+            elif self.bar:
+                self.bar.total_length = self.visualizer.audio_duration # type: ignore
+                self.bar.visualizer = self.visualizer  # type: ignore
 
             return self.visualizer
         
@@ -216,6 +230,9 @@ class Inputs:
                 if bar:
                     bar.total_length = self.visualizer.audio_duration # type: ignore
                     bar.visualizer = self.visualizer  # type: ignore
+                elif self.bar:
+                    self.bar.total_length = self.visualizer.audio_duration # type: ignore
+                    self.bar.visualizer = self.visualizer  # type: ignore
                 
                 return self.visualizer
 

@@ -225,6 +225,9 @@ class WaveVisualizer:
                             (1 - SMOOTHING_FACTOR) * self.bar_height_target[bar_index]
                         )
                     bar_index += 1
+
+    def toggle_bar(self):
+        self.render_bars = not(self.render_bars)
     
     def render_frame(self, screen: pygame.Surface, mouse_pos: None | list[int] = None) -> bool:
         """

@@ -19,7 +19,7 @@ from input_handler import Inputs
 from volume_worker import volume_manager
 import shutil
 from input_handler import Buttons
-
+from media_in_n_out import media_out_handle
 from typing import Any
 
 
@@ -139,9 +139,12 @@ directory_only, files_only, directory_buttons, file_buttons, og_folder = get_mus
 current_dir = og_folder
 
 # set up class instances
+song_length_bar = SongBar(0, 0, screen.get_width(), screen.get_height(), screen, None)
+
 image_handler = image_get(screen, 720)
-player = Inputs(folder_path)
-player.queue = files_only.copy()
+player = Inputs(folder_path, bar=song_length_bar)
+
+media_bar = media_out_handle(player, song_length_bar)
 
 # Scroll state variables
 dir_scroll_offset = 0  # Vertical offset for directories
@@ -188,8 +191,6 @@ visualizer = None
 typing = False
 search_query = ""
 
-song_length_bar = SongBar(0, 0, screen.get_width(), screen.get_height(), screen, None)
-
 dragging = False
 
 running = True
@@ -230,6 +231,9 @@ while running:
         directory_buttons, file_buttons = scroll_files_and_directories(dir_scroll_offset, file_scroll_offset, directory_buttons, file_buttons, screen.get_height(), directory_only, files_only)
 
     lerp_speed = 0.4
+
+    if media_bar.paused == player.playing:
+        media_bar.paused = not player.playing
     
     if abs(file_scroll_target - file_scroll_offset) > 0.5:
         file_scroll_offset += (file_scroll_target - file_scroll_offset) * lerp_speed
@@ -310,6 +314,7 @@ while running:
         artist_text = font.render(artist, True, (255, 255, 255))
         artist_rect = artist_text.get_rect(center=((screen.get_width()-screen.get_width()/5)// 2+screen.get_width()/5, screen.get_height() // 2+render_size[1]/2+50))
         visualizer = player.visualizer
+        song_length_bar.visualizer = visualizer
         if visualizer:
             render_size, render_path = album_handler.update_size()
             render_size, render_path = album_handler.update_image(player.get_image_path())
@@ -318,6 +323,10 @@ while running:
             render_size, render_path = album_handler.update_size()
             render_size, render_path = album_handler.update_image()
             play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_play.jpg")
+
+        if media_bar:
+            media_bar.update_song(artist, playing_song, song_length_bar.total_length)
+            print("yes")
 
     screen.blit(playing_text, playing_rect)
     screen.blit(artist_text, artist_rect)
@@ -394,6 +403,8 @@ while running:
                 volume.adjust_volume(mouse_pos)
                 if song_length_bar:
                     song_length_bar.adjust_time(mouse_pos)
+                if media_bar:
+                        media_bar.update_pos(player.visualizer.get_position() if player.visualizer else 0)
 
 
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -401,6 +412,8 @@ while running:
                 mouse_pos = event.pos
                 if song_length_bar:
                     song_length_bar.adjust_time(mouse_pos)
+                    if media_bar:
+                        media_bar.update_pos(player.visualizer.get_position() if player.visualizer else 0)
 
                 if typing_box.collidepoint(mouse_pos):
                     typing = True
@@ -448,10 +461,10 @@ while running:
                 for button in file_buttons:
                     button_rect = pygame.Rect(0, button[0], screen.get_width()/5, 40)
                     if button_rect.collidepoint(mouse_pos):
-                        visualizer = player.play(os.path.join(current_dir, button[1]), bar = song_length_bar)
-                        render_size, render_path = album_handler.update_size()
-                        render_size, render_path = album_handler.update_image(os.path.join(current_dir, button[1]))  
-                        play_pause_button_path = os.path.join(os.path.dirname(__file__), "assets/play_pause.jpg")
+                        if player.playing_song != button[1]:
+                            player.play(os.path.join(current_dir, button[1]), bar = song_length_bar)
+                        elif visualizer:
+                            visualizer.set_position(0)
 
                         if search_query != "":
                             search_query = ""
