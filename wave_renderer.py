@@ -226,7 +226,7 @@ class WaveVisualizer:
                         )
                     bar_index += 1
 
-    def toggle_bar(self):
+    def toggle_bars(self):
         self.render_bars = not(self.render_bars)
     
     def render_frame(self, screen: pygame.Surface, mouse_pos: None | list[int] = None) -> bool:

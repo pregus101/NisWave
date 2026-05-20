@@ -7,6 +7,7 @@
 import pygame
 import os
 import threading
+from pygame.mixer_music import play
 from pynput import keyboard
 from screeninfo import get_monitors
 import sys
@@ -43,17 +44,13 @@ folder_path = user_music_dir()
 oper = ""
 # Get other drives
 if sys.platform.startswith('win'):
-    # print("Running on Windows")
     oper = "windows"
 elif sys.platform.startswith('linux'):
-    # print("Running on Linux")
     oper = "linux"
 elif sys.platform == 'darwin':
-    # print("Running on macOS")
     oper = "mac"
 else:
-    # print("Unknown OS")
-    oper = "default"
+    raise OSError("Unsupported OS")
 
 drives: list[Path] = get_drives()
 
@@ -207,8 +204,9 @@ play_button = Buttons(x=(screen.get_width()-screen.get_width()/5)/2+screen.get_w
 skip_button = Buttons(x=(screen.get_width()-screen.get_width()/5)/2+58+screen.get_width()/ 5, y=screen.get_height() - 50, func=player.next, parameters=song_length_bar, asset_path=os.path.join(os.path.dirname(__file__), "assets/skip.jpg"), screen=screen)
 shuffle_button = Buttons(x=(screen.get_width()-screen.get_width()/5)/2-135+screen.get_width()/5+25, y=screen.get_height() - 50, func=player.shuffle, parameters=None, asset_path=os.path.join(os.path.dirname(__file__), "assets/shuffle_unshuffled_hover.jpg"), asset_path_2=os.path.join(os.path.dirname(__file__), "assets/shuffle_shuffled_hover.jpg"), togglable=True, screen=screen)
 previous_button = Buttons(x=(screen.get_width()-screen.get_width()/5)/2-58+screen.get_width()/ 5, y=screen.get_height() - 50, func=player.previous, parameters=song_length_bar, asset_path=os.path.join(os.path.dirname(__file__), "assets/previous.jpg"), screen=screen)
+bar_toggle = Buttons(x=(screen.get_width()-screen.get_width()/5)/2-212+screen.get_width()/5+25, y=screen.get_height() - 50, func=player.toggle_bars, parameters=None, asset_path=os.path.join(os.path.dirname(__file__), "assets/bars_on.jpg"), asset_path_2=os.path.join(os.path.dirname(__file__), "assets/bars_off.jpg"), togglable=True, screen=screen)
 
-media_control_buttons = [play_button, skip_button, shuffle_button, previous_button]
+media_control_buttons = [play_button, skip_button, shuffle_button, previous_button, bar_toggle]
 
 while running:
 
@@ -275,9 +273,6 @@ while running:
     pygame.draw.rect(screen, (40, 40, 40), (0, 0, screen.get_width()/5, 40))
     pygame.draw.rect(screen, (40, 40, 40), (0, screen.get_height()/2-40, screen.get_width()/5, 80))
 
-    screen.blit(directory_text, (10, 10))
-    screen.blit(file_text, (10, screen.get_height()/2))
-
     try:
         # Draw scrollbars
         dir_max_scroll = max(0, len(directory_only) * 40 - (screen.get_height()/2 - 60))
@@ -304,8 +299,6 @@ while running:
         album_cover_rect = album_cover[0].get_rect()
         album_cover_rect.center = (screen.get_width()/5 + (screen.get_width()-screen.get_width()/5)/2, screen.get_height()/2)
 
-    screen.blit(album_cover[0], album_cover_rect)
-
     if playing_song != player.playing_song:
         playing_song = player.playing_song
         playing_text = font.render(player.playing_song.split(".")[0], True, (255, 255, 255))
@@ -328,6 +321,9 @@ while running:
             media_bar.update_song(artist, playing_song, song_length_bar.total_length)
             print("yes")
 
+    screen.blit(directory_text, (10, 10))
+    screen.blit(file_text, (10, screen.get_height()/2))
+    screen.blit(album_cover[0], album_cover_rect)
     screen.blit(playing_text, playing_rect)
     screen.blit(artist_text, artist_rect)
 

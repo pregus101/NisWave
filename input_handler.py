@@ -95,6 +95,7 @@ class Inputs:
         self.queue_add: int = 0
         self.nav_dir: str = current_dir
         self.bar: None | object = None
+        self.toggle_bar: bool = True
 
     def shuffle(self) -> None:
         self.shuffled = not self.shuffled
@@ -107,6 +108,12 @@ class Inputs:
                 self.index = i
                 self.queue = self.unshuffled.copy()
         return None
+    
+    def toggle_bars(self) -> None:
+        self.toggle_bar = not self.toggle_bar
+        if self.visualizer:
+            self.visualizer.toggle_bars()
+        
     
     def next(self, bar: None | object = None) -> WaveVisualizer | None:
         if self.visualizer:
@@ -128,7 +135,8 @@ class Inputs:
                 self.index += 1
                 self.visualizer = WaveVisualizer(os.path.join(self.currently_dir, self.queue[self.index]),
                                                         self.render[0],
-                                                        self.render[1])
+                                                        self.render[1],
+                                                        render_bars=self.toggle_bar)
                 self.visualizer.load_audio()
                 self.visualizer.play()
                 self.playing = True 
@@ -165,7 +173,8 @@ class Inputs:
                     self.index -= 1
                     self.visualizer = WaveVisualizer(os.path.join(self.currently_dir, self.queue[self.index]),
                                                     self.render[0],
-                                                    self.render[1])
+                                                    self.render[1],
+                                                    render_bars=self.toggle_bar)
                     self.visualizer.load_audio()
                     self.visualizer.play()
                     self.playing = True
@@ -193,7 +202,8 @@ class Inputs:
 
             self.visualizer = WaveVisualizer(os.path.join(self.currently_dir, self.queue[self.index]),
                                             self.render[0],
-                                            self.render[1])
+                                            self.render[1],
+                                            render_bars=self.toggle_bar)
             self.visualizer.load_audio()
             self.visualizer.play()
             self.playing = True
@@ -222,7 +232,8 @@ class Inputs:
             if self.queue:
                 self.visualizer = WaveVisualizer(os.path.join(self.currently_dir, self.queue[self.index]),
                                                 self.render[0],
-                                                self.render[1])
+                                                self.render[1],
+                                                render_bars=self.toggle_bar)
                 self.visualizer.load_audio()
                 self.visualizer.play()
                 self.playing = True
